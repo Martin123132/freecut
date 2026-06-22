@@ -64,7 +64,13 @@ $scanTargets = @(
   'SECURITY.md',
   '.github',
   'docs',
-  'scripts'
+  'scripts',
+  'server',
+  'src',
+  'tests',
+  'playwright.config.ts',
+  'vite.config.ts',
+  'tsconfig.json'
 ) | ForEach-Object {
   Join-Path $projectRoot $_
 } | Where-Object {

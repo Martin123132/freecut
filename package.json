@@ -11,6 +11,7 @@
     "build": "tsc && vite build",
     "doctor": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/doctor.ps1",
     "qa:import-transition": "npm run build && playwright test tests/freecut-import-transition.spec.ts",
+    "qa:smoke": "npm run build && playwright test tests/freecut-import-transition.spec.ts tests/freecut-export-job.spec.ts",
     "preview": "vite preview --host 127.0.0.1"
   },
   "dependencies": {

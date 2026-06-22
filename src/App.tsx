@@ -33,8 +33,10 @@ type LatestExport = {
 type ExportJobStatus = {
   error?: string;
   id: string;
+  message?: string;
   progress: number;
   status: 'queued' | 'running' | 'complete' | 'error' | 'canceled';
+  updatedAt?: number;
 };
 type ApiHealth = {
   dataRoot?: string;
@@ -475,8 +477,8 @@ function App() {
     exportAbortRef.current = abortController;
     exportJobIdRef.current = null;
     setExportState('exporting');
-    setExportProgress(0);
-    setExportMessage(`Rendering ${exportProfile.label} MP4`);
+    setExportProgress(1);
+    setExportMessage('Uploading source clip');
 
     const payload = new FormData();
     payload.append('video', file);
@@ -505,9 +507,12 @@ function App() {
 
       const startedJob = (await response.json()) as ExportJobStatus;
       exportJobIdRef.current = startedJob.id;
+      setExportProgress(clamp(startedJob.progress || 1, 1, 100));
+      setExportMessage(startedJob.message || 'Queued export');
       const finishedJob = await waitForExportJob(startedJob.id, abortController.signal);
       if (finishedJob.status !== 'complete') throw new Error(finishedJob.error || 'Export failed');
 
+      setExportMessage('Preparing download');
       const downloadResponse = await fetch(`/api/export/jobs/${startedJob.id}/download`, {
         signal: abortController.signal
       });
@@ -535,8 +540,9 @@ function App() {
         setExportProgress(0);
         setExportMessage('Export canceled');
       } else {
+        const message = error instanceof Error ? error.message : 'Export failed';
         setExportState('error');
-        setExportMessage(error instanceof Error ? error.message : 'Export failed');
+        setExportMessage(message.startsWith('Export') ? message : `Export failed - ${message}`);
       }
     } finally {
       exportInFlightRef.current = false;
@@ -557,9 +563,18 @@ function App() {
 
       const job = (await response.json()) as ExportJobStatus;
       setExportProgress(clamp(job.progress, 0, 100));
+      setExportMessage(job.message || exportMessageForJob(job));
       if (job.status === 'complete' || job.status === 'error' || job.status === 'canceled') return job;
       await new Promise((resolve) => setTimeout(resolve, 450));
     }
+  };
+
+  const exportMessageForJob = (job: ExportJobStatus) => {
+    if (job.status === 'queued') return 'Queued export';
+    if (job.status === 'running') return 'Rendering MP4';
+    if (job.status === 'complete') return 'Export ready';
+    if (job.status === 'canceled') return 'Export canceled';
+    return job.error ? `Export failed - ${job.error}` : 'Export failed';
   };
 
   const cancelExport = () => {
@@ -866,7 +881,7 @@ function App() {
           <div className={`export-status ${exportState}`} data-testid="export-status">
             <span>
               {exportState === 'exporting'
-                ? `Rendering ${exportProfile.label} MP4 - ${Math.round(exportProgress)}%`
+                ? `${exportMessage || `Rendering ${exportProfile.label} MP4`} - ${Math.round(exportProgress)}%`
                 : exportState === 'done' && latestExport
                   ? `${latestExportIsCurrent ? 'Export ready' : 'Previous export'} - ${bytesToSize(latestExport.size)}`
                   : exportMessage || 'Idle'}
@@ -879,6 +894,10 @@ function App() {
             {exportState === 'exporting' ? (
               <button className="status-cancel" type="button" onClick={cancelExport}>
                 Cancel
+              </button>
+            ) : exportState === 'error' && canExport ? (
+              <button className="status-retry" type="button" onClick={() => void exportClip()}>
+                Retry
               </button>
             ) : latestExport ? (
               <button className="status-download" type="button" onClick={downloadLatestExport}>

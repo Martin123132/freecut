@@ -1478,6 +1478,7 @@ button {
 }
 
 .status-cancel,
+.status-retry,
 .status-download {
   display: inline-flex;
   align-items: center;
@@ -1497,6 +1498,11 @@ button {
 .status-download {
   color: var(--accent-ink);
   background: var(--accent);
+}
+
+.status-retry {
+  color: var(--accent-ink);
+  background: var(--warn);
 }
 
 .settings-scrim {

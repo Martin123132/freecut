@@ -174,9 +174,11 @@ app.post('/api/export/jobs', upload.single('video'), async (request, response) =
       error: '',
       filename: 'freecut-export.mp4',
       inputPath,
+      message: 'Queued export',
       outputPath: exportPlan.outputPath,
       progress: 0,
-      status: 'queued'
+      status: 'queued',
+      updatedAt: Date.now()
     };
 
     exportJobs.set(id, job);
@@ -210,6 +212,8 @@ app.delete('/api/export/jobs/:id', async (request, response) => {
   if (job.status === 'queued' || job.status === 'running') {
     job.status = 'canceled';
     job.error = 'Export canceled.';
+    job.message = 'Export canceled';
+    job.updatedAt = Date.now();
     job.abortController.abort();
   }
 
@@ -299,17 +303,25 @@ function createExportPlan(body, inputPath) {
 
 async function runExportJob(job, args) {
   job.status = 'running';
+  job.message = 'Rendering MP4';
+  job.updatedAt = Date.now();
 
   try {
     await runFfmpeg(args, job.abortController.signal, (progress) => {
       job.progress = Math.max(job.progress, Math.min(99, progress));
+      job.message = job.progress >= 98 ? 'Finalizing MP4' : 'Rendering MP4';
+      job.updatedAt = Date.now();
     });
     job.status = 'complete';
     job.progress = 100;
+    job.message = 'Export ready';
+    job.updatedAt = Date.now();
   } catch (error) {
     if (job.status !== 'canceled') {
       job.status = job.abortController.signal.aborted ? 'canceled' : 'error';
       job.error = error instanceof Error ? error.message : 'Export failed.';
+      job.message = job.status === 'canceled' ? 'Export canceled' : 'Export failed';
+      job.updatedAt = Date.now();
     }
     await cleanup(job.inputPath, job.outputPath);
     if (job.status === 'canceled') exportJobs.delete(job.id);
@@ -320,8 +332,10 @@ function toJobStatus(job) {
   return {
     id: job.id,
     error: job.error,
+    message: job.message,
     progress: job.progress,
-    status: job.status
+    status: job.status,
+    updatedAt: job.updatedAt
   };
 }
 
@@ -331,7 +345,7 @@ function buildVideoFilter({ width, height, overlayText, overlayX, overlayY, over
     `crop=${width}:${height}`,
     'setsar=1'
   ];
-  const defaultFont = 'C:\\Windows\\Fonts\\arial.ttf';
+  const defaultFont = resolveDefaultFont();
   const fontOption = fs.existsSync(defaultFont) ? `:fontfile='${escapeFilterPath(defaultFont)}'` : '';
 
   if (overlayText) {
@@ -349,6 +363,11 @@ function buildVideoFilter({ width, height, overlayText, overlayX, overlayY, over
   });
 
   return filters.join(',');
+}
+
+function resolveDefaultFont() {
+  const systemRoot = process.env.WINDIR || process.env.SystemRoot;
+  return systemRoot ? path.join(systemRoot, 'Fonts', 'arial.ttf') : '';
 }
 
 function parseCaptions(value, trimStart, duration) {

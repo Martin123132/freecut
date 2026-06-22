@@ -1,4 +1,4 @@
-import { AlignCenter, Crop, Type } from 'lucide-react';
+import { AlignCenter, Crosshair, Crop, Type } from 'lucide-react';
 import { CaptionCue } from '../lib/captions';
 import { ExportProfile } from '../lib/exportProfiles';
 import { AspectPreset, aspectPresets } from '../lib/presets';
@@ -20,6 +20,8 @@ type InspectorProps = {
   overlayX: number;
   overlayY: number;
   overlaySize: number;
+  cropX: number;
+  cropY: number;
   onCaptionsChange: (captions: CaptionCue[]) => void;
   onExportProfileChange: (profile: ExportProfile) => void;
   onPresetChange: (preset: AspectPreset) => void;
@@ -27,6 +29,9 @@ type InspectorProps = {
   onOverlayXChange: (value: number) => void;
   onOverlayYChange: (value: number) => void;
   onOverlaySizeChange: (value: number) => void;
+  onCropXChange: (value: number) => void;
+  onCropYChange: (value: number) => void;
+  onCropCenter: () => void;
   onPreflightPrimaryAction: () => void;
   onSeek: (time: number) => void;
 };
@@ -45,6 +50,8 @@ export function Inspector({
   overlayX,
   overlayY,
   overlaySize,
+  cropX,
+  cropY,
   onCaptionsChange,
   onExportProfileChange,
   onPresetChange,
@@ -52,6 +59,9 @@ export function Inspector({
   onOverlayXChange,
   onOverlayYChange,
   onOverlaySizeChange,
+  onCropXChange,
+  onCropYChange,
+  onCropCenter,
   onPreflightPrimaryAction,
   onSeek
 }: InspectorProps) {
@@ -89,6 +99,38 @@ export function Inspector({
             </button>
           ))}
         </div>
+      </section>
+
+      <section className="control-group">
+        <div className="control-title control-title-split">
+          <span>
+            <Crosshair size={16} />
+            <span>Reframe</span>
+          </span>
+          <button className="mini-action" type="button" onClick={onCropCenter}>
+            Center
+          </button>
+        </div>
+        <label className="field">
+          <span>Focus X</span>
+          <input
+            type="range"
+            min={0}
+            max={100}
+            value={cropX}
+            onChange={(event) => onCropXChange(Number(event.target.value))}
+          />
+        </label>
+        <label className="field">
+          <span>Focus Y</span>
+          <input
+            type="range"
+            min={0}
+            max={100}
+            value={cropY}
+            onChange={(event) => onCropYChange(Number(event.target.value))}
+          />
+        </label>
       </section>
 
       <section className="control-group">

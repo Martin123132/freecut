@@ -66,6 +66,8 @@ function App() {
   const [overlayX, setOverlayX] = useState(50);
   const [overlayY, setOverlayY] = useState(72);
   const [overlaySize, setOverlaySize] = useState(4.5);
+  const [cropX, setCropX] = useState(50);
+  const [cropY, setCropY] = useState(50);
   const [isPlaying, setIsPlaying] = useState(false);
   const [exportState, setExportState] = useState<ExportState>('idle');
   const [exportMessage, setExportMessage] = useState('');
@@ -162,6 +164,8 @@ function App() {
         captions: normalizeCaptions(captions, duration),
         exportProfileId: exportProfile.id,
         fileName: file?.name ?? projectMediaName,
+        cropX,
+        cropY,
         overlaySize,
         overlayText,
         overlayX,
@@ -170,7 +174,7 @@ function App() {
         trimEnd,
         trimStart
       }),
-    [captions, duration, exportProfile.id, file, overlaySize, overlayText, overlayX, overlayY, preset.id, projectMediaName, trimEnd, trimStart]
+    [captions, cropX, cropY, duration, exportProfile.id, file, overlaySize, overlayText, overlayX, overlayY, preset.id, projectMediaName, trimEnd, trimStart]
   );
   const latestExportIsCurrent = Boolean(latestExport && latestExport.projectKey === exportProjectKey);
   useEffect(() => {
@@ -188,7 +192,7 @@ function App() {
     const snapshot = buildProjectSnapshot();
     writeStoredProject(snapshot);
     setProjectStatus('Autosaved');
-  }, [captions, exportProfile, file, overlaySize, overlayText, overlayX, overlayY, preset, projectMediaName, trimEnd, trimStart]);
+  }, [captions, cropX, cropY, exportProfile, file, overlaySize, overlayText, overlayX, overlayY, preset, projectMediaName, trimEnd, trimStart]);
 
   const handleSelectFile = (nextFile: File) => {
     const expectedMediaName = projectMediaName;
@@ -324,6 +328,22 @@ function App() {
     setOverlaySize(value);
   };
 
+  const updateCropX = (value: number) => {
+    autosaveArmedRef.current = true;
+    setCropX(value);
+  };
+
+  const updateCropY = (value: number) => {
+    autosaveArmedRef.current = true;
+    setCropY(value);
+  };
+
+  const centerCrop = () => {
+    autosaveArmedRef.current = true;
+    setCropX(50);
+    setCropY(50);
+  };
+
   const resetTrimToFull = () => {
     if (!duration) return;
 
@@ -356,6 +376,8 @@ function App() {
       overlayX,
       overlayY,
       overlaySize,
+      cropX,
+      cropY,
       captions
     });
 
@@ -383,6 +405,8 @@ function App() {
     setOverlayX(snapshot.overlayX);
     setOverlayY(snapshot.overlayY);
     setOverlaySize(snapshot.overlaySize);
+    setCropX(snapshot.cropX);
+    setCropY(snapshot.cropY);
     setCaptions(snapshot.captions);
     pendingProjectRangeRef.current = shouldWaitForMedia
       ? { trimStart: snapshot.trimStart, trimEnd: snapshot.trimEnd }
@@ -442,6 +466,8 @@ function App() {
     setOverlayX(50);
     setOverlayY(72);
     setOverlaySize(4.5);
+    setCropX(50);
+    setCropY(50);
     setTrimStart(0);
     setTrimEnd(duration || 0);
     setCurrentTime(0);
@@ -491,6 +517,8 @@ function App() {
     payload.append('overlayX', String(overlayX));
     payload.append('overlayY', String(overlayY));
     payload.append('overlaySize', String(overlaySize));
+    payload.append('cropX', String(cropX));
+    payload.append('cropY', String(cropY));
     payload.append('captions', JSON.stringify(normalizeCaptions(captions, duration)));
 
     try {
@@ -803,6 +831,8 @@ function App() {
           overlayX={overlayX}
           overlayY={overlayY}
           overlaySize={overlaySize}
+          cropX={cropX}
+          cropY={cropY}
           onPlayPause={playPause}
           onSeek={seek}
           onRestart={restart}
@@ -824,6 +854,8 @@ function App() {
           overlayX={overlayX}
           overlayY={overlayY}
           overlaySize={overlaySize}
+          cropX={cropX}
+          cropY={cropY}
           onCaptionsChange={updateCaptions}
           onExportProfileChange={updateExportProfile}
           onPresetChange={updatePreset}
@@ -831,6 +863,9 @@ function App() {
           onOverlayXChange={updateOverlayX}
           onOverlayYChange={updateOverlayY}
           onOverlaySizeChange={updateOverlaySize}
+          onCropXChange={updateCropX}
+          onCropYChange={updateCropY}
+          onCropCenter={centerCrop}
           onPreflightPrimaryAction={handlePreflightPrimaryAction}
           onSeek={seek}
         />

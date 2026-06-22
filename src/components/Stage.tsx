@@ -19,6 +19,8 @@ type StageProps = {
   overlayX: number;
   overlayY: number;
   overlaySize: number;
+  cropX: number;
+  cropY: number;
   onPlayPause: () => void;
   onSeek: (time: number) => void;
   onRestart: () => void;
@@ -42,6 +44,8 @@ export function Stage({
   overlayX,
   overlayY,
   overlaySize,
+  cropX,
+  cropY,
   onPlayPause,
   onSeek,
   onRestart,
@@ -68,6 +72,7 @@ export function Stage({
               <video
                 ref={videoRef}
                 src={previewUrl}
+                style={{ objectPosition: `${cropX}% ${cropY}%` }}
                 onLoadedMetadata={onLoadedMetadata}
                 onTimeUpdate={onTimeUpdate}
                 onPause={onTimeUpdate}

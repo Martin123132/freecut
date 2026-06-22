@@ -9,7 +9,7 @@ Public demo page: https://martin123132.github.io/freecut/
 - Import one video locally
 - Preview, play, and seek
 - Set trim start/end with a media-aware thumbnail timeline
-- Choose an export aspect ratio
+- Choose an export aspect ratio and reframe the crop focus
 - Add a text overlay
 - Add timed captions or import SRT/VTT captions
 - Autosave project settings locally and import/export `.freecut.json` project files

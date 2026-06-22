@@ -753,6 +753,33 @@ button {
   font-weight: 850;
 }
 
+.control-title-split {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.control-title-split > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mini-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 24px;
+  padding: 0 8px;
+  color: var(--accent-ink);
+  background: var(--accent);
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 900;
+}
+
 .preflight-panel {
   margin-top: 14px;
   padding: 12px;

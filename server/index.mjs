@@ -105,6 +105,8 @@ app.post('/api/export', upload.single('video'), async (request, response) => {
     const overlayX = readNumber(request.body.overlayX, 50, 0, 100);
     const overlayY = readNumber(request.body.overlayY, 72, 0, 100);
     const overlaySize = readNumber(request.body.overlaySize, 4.5, 1, 12);
+    const cropX = readNumber(request.body.cropX, 50, 0, 100);
+    const cropY = readNumber(request.body.cropY, 50, 0, 100);
     const overlayText = String(request.body.overlayText || '').trim();
     const exportProfile = readExportProfile(request.body.exportProfileId);
     const duration = Math.max(0.1, trimEnd - trimStart);
@@ -116,6 +118,8 @@ app.post('/api/export', upload.single('video'), async (request, response) => {
       overlayX,
       overlayY,
       overlaySize,
+      cropX,
+      cropY,
       captions
     });
 
@@ -255,6 +259,8 @@ function createExportPlan(body, inputPath) {
   const overlayX = readNumber(body.overlayX, 50, 0, 100);
   const overlayY = readNumber(body.overlayY, 72, 0, 100);
   const overlaySize = readNumber(body.overlaySize, 4.5, 1, 12);
+  const cropX = readNumber(body.cropX, 50, 0, 100);
+  const cropY = readNumber(body.cropY, 50, 0, 100);
   const overlayText = String(body.overlayText || '').trim();
   const exportProfile = readExportProfile(body.exportProfileId);
   const duration = Math.max(0.1, trimEnd - trimStart);
@@ -266,6 +272,8 @@ function createExportPlan(body, inputPath) {
     overlayX,
     overlayY,
     overlaySize,
+    cropX,
+    cropY,
     captions
   });
 
@@ -339,10 +347,10 @@ function toJobStatus(job) {
   };
 }
 
-function buildVideoFilter({ width, height, overlayText, overlayX, overlayY, overlaySize, captions }) {
+function buildVideoFilter({ width, height, overlayText, overlayX, overlayY, overlaySize, cropX, cropY, captions }) {
   const filters = [
     `scale=${width}:${height}:force_original_aspect_ratio=increase`,
-    `crop=${width}:${height}`,
+    `crop=${width}:${height}:(in_w-out_w)*${cropX / 100}:(in_h-out_h)*${cropY / 100}`,
     'setsar=1'
   ];
   const defaultFont = resolveDefaultFont();

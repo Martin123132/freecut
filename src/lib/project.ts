@@ -16,6 +16,8 @@ export type ProjectSnapshot = {
   overlayX: number;
   overlayY: number;
   overlaySize: number;
+  cropX: number;
+  cropY: number;
   captions: CaptionCue[];
 };
 
@@ -81,6 +83,8 @@ function sanitizeProjectSnapshot(input: Partial<ProjectSnapshot>): ProjectSnapsh
     overlayX: readNumber(input.overlayX, 50, 0, 100),
     overlayY: readNumber(input.overlayY, 72, 0, 100),
     overlaySize: readNumber(input.overlaySize, 4.5, 1, 12),
+    cropX: readNumber(input.cropX, 50, 0, 100),
+    cropY: readNumber(input.cropY, 50, 0, 100),
     captions: normalizeCaptions(Array.isArray(input.captions) ? input.captions : [], trimEnd || 0)
   };
 }

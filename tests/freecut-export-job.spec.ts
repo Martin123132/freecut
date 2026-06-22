@@ -13,7 +13,20 @@ async function importSmokeClip(page: Page, testInfo: TestInfo) {
   });
 }
 
+async function setRangeValue(page: Page, label: string, value: string) {
+  await page.getByLabel(label).evaluate(
+    (element, nextValue) => {
+      const input = element as HTMLInputElement;
+      const valueSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
+      valueSetter?.call(input, nextValue);
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    },
+    value
+  );
+}
+
 test('export job progress reaches ready state', async ({ page }, testInfo) => {
+  let exportBody = '';
   let statusPolls = 0;
 
   await page.route('**/api/export/jobs', async (route) => {
@@ -22,6 +35,7 @@ test('export job progress reaches ready state', async ({ page }, testInfo) => {
       return;
     }
 
+    exportBody = route.request().postData() ?? '';
     await route.fulfill({
       contentType: 'application/json',
       status: 202,
@@ -72,11 +86,19 @@ test('export job progress reaches ready state', async ({ page }, testInfo) => {
   });
 
   await importSmokeClip(page, testInfo);
+  await page.locator('.preset', { hasText: '9:16' }).click();
+  await setRangeValue(page, 'Focus X', '80');
+  await setRangeValue(page, 'Focus Y', '35');
+  await expect(page.locator('video')).toHaveCSS('object-position', '80% 35%');
 
   await page.getByTestId('next-move').click();
   await expect(page.getByTestId('export-status')).toContainText(/Queued export|Rendering MP4|Uploading source clip/);
   await expect(page.getByTestId('export-status')).toContainText('Export ready');
   await expect(page.getByRole('button', { name: 'Download again' })).toBeVisible();
+  expect(exportBody).toMatch(/name="cropX"[\s\S]*80/);
+  expect(exportBody).toMatch(/name="cropY"[\s\S]*35/);
+  expect(exportBody).toMatch(/name="width"[\s\S]*1080/);
+  expect(exportBody).toMatch(/name="height"[\s\S]*1920/);
 });
 
 test('export failures offer retry without losing the clip', async ({ page }, testInfo) => {

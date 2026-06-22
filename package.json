@@ -9,6 +9,7 @@
     "dev:api": "node server/index.mjs",
     "dev:web": "vite --host 127.0.0.1",
     "build": "tsc && vite build",
+    "doctor": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/doctor.ps1",
     "qa:import-transition": "npm run build && playwright test tests/freecut-import-transition.spec.ts",
     "preview": "vite preview --host 127.0.0.1"
   },

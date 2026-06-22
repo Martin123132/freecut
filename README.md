@@ -21,14 +21,20 @@ Public demo page: https://martin123132.github.io/freecut/
 ## Development
 
 All project files are intended to live under `D:\codex-projects\open-video-editor`.
+Keep npm, Playwright, and temporary caches on the D drive when developing on this machine.
 
 ```powershell
 cd D:\codex-projects\open-video-editor
 $env:TMP='D:\codex-tmp'
 $env:TEMP='D:\codex-tmp'
+$env:HOME='D:\codex-cache\node-home'
+$env:USERPROFILE='D:\codex-cache\node-home'
 $env:npm_config_cache='D:\codex-cache\npm'
-& 'C:\Program Files\nodejs\npm.cmd' install
-& 'C:\Program Files\nodejs\npm.cmd' run dev
+$env:npm_config_prefix='D:\codex-cache\npm-global'
+$env:npm_config_userconfig='D:\codex-cache\npm\.npmrc'
+$env:PLAYWRIGHT_BROWSERS_PATH='D:\codex-cache\ms-playwright'
+npm install
+npm run dev
 ```
 
 The API listens on `127.0.0.1:5174`; Vite listens on `127.0.0.1:5173`.
@@ -41,9 +47,13 @@ The native OS file-picker window is not reliably automatable. The import-transit
 cd D:\codex-projects\open-video-editor
 $env:TMP='D:\codex-tmp'
 $env:TEMP='D:\codex-tmp'
+$env:HOME='D:\codex-cache\node-home'
+$env:USERPROFILE='D:\codex-cache\node-home'
 $env:npm_config_cache='D:\codex-cache\npm'
+$env:npm_config_prefix='D:\codex-cache\npm-global'
+$env:npm_config_userconfig='D:\codex-cache\npm\.npmrc'
 $env:PLAYWRIGHT_BROWSERS_PATH='D:\codex-cache\ms-playwright'
-& 'C:\Program Files\nodejs\npm.cmd' run qa:import-transition
+npm run qa:import-transition
 ```
 
 The smoke uses `127.0.0.1:51713` by default so it does not accidentally reuse a different app already running on Vite's usual `5173` port. Override it with `$env:FREECUT_QA_WEB_PORT='<port>'` if needed.
@@ -52,5 +62,5 @@ If the Chromium browser is not present yet, install it into the same D-drive cac
 
 ```powershell
 $env:PLAYWRIGHT_BROWSERS_PATH='D:\codex-cache\ms-playwright'
-& 'C:\Program Files\nodejs\npm.cmd' exec playwright install chromium
+npm exec playwright install chromium
 ```

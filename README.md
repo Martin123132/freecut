@@ -2,6 +2,8 @@
 
 FreeCut is a local-first, open-source short-form video editor aimed at the trim, resize, caption, and export workflows commonly locked behind web subscriptions.
 
+Public demo page: https://martin123132.github.io/freecut/
+
 ## MVP
 
 - Import one video locally

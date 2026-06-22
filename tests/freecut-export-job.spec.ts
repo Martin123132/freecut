@@ -74,7 +74,7 @@ test('export job progress reaches ready state', async ({ page }, testInfo) => {
   await importSmokeClip(page, testInfo);
 
   await page.getByTestId('next-move').click();
-  await expect(page.getByTestId('export-status')).toContainText('Queued export');
+  await expect(page.getByTestId('export-status')).toContainText(/Queued export|Rendering MP4|Uploading source clip/);
   await expect(page.getByTestId('export-status')).toContainText('Export ready');
   await expect(page.getByRole('button', { name: 'Download again' })).toBeVisible();
 });

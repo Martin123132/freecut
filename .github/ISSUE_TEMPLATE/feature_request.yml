@@ -1,0 +1,43 @@
+name: Feature request
+description: Suggest a workflow, editor feature, converter, exporter, or usability improvement.
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for shaping FreeCut. Strong feature requests describe the editing job, not just the button.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What are you trying to do, and what blocks you today?
+      placeholder: I want to turn a long video into multiple short clips without uploading it anywhere.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: What should FreeCut add or change?
+      placeholder: Add markers that can be exported as separate clips.
+    validations:
+      required: true
+  - type: textarea
+    id: workflow
+    attributes:
+      label: Workflow
+      description: Describe the ideal user flow from import to export.
+      placeholder: Import video, add markers, choose aspect ratio, export each marked section.
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Other tools, manual workarounds, or simpler versions of the feature.
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: How would we know this is working well?
+      placeholder: Exports each marked range as a separate MP4 and preserves the selected crop.

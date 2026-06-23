@@ -27,6 +27,7 @@ test('mission path updates as workflow unlocks', async ({ page }, testInfo) => {
   await expect(miniMap).toBeVisible();
   await expect(miniMap.getByRole('button', { name: 'Open map' })).toBeVisible();
   await expect(miniMap.getByText('Next: import a local clip.')).toBeVisible();
+  await expect(miniMap.getByTestId('mission-discovery')).toContainText('Suggestion: start with one local clip');
 
   await page.keyboard.press('q');
   await expect(page.getByTestId('quick-start')).toBeVisible();
@@ -71,6 +72,7 @@ test('mission rail stays visible and ready when map is minimized', async ({ page
   await expect(miniRail.getByTestId('mission-step-source-action')).toHaveText('Import');
   await expect(miniRail.getByTestId('mission-step-frame-action')).toBeDisabled();
   await expect(miniRail.getByTestId('mission-step-captions-action')).toBeDisabled();
+  await expect(miniRail.getByTestId('mission-discovery')).toContainText('Suggestion: start with one local clip');
 
   const smokeVideoPath = testInfo.outputPath('freecut-guided-rail.webm');
   await createSmokeVideo(smokeVideoPath);
@@ -84,7 +86,8 @@ test('mission rail stays visible and ready when map is minimized', async ({ page
   await expect(miniRail.getByTestId('mission-step-frame-action')).toBeEnabled();
   await expect(miniRail.getByTestId('mission-step-captions-action')).toBeEnabled();
   await expect(miniRail.getByTestId('mission-step-export-action')).toContainText('Export MP4');
+  await expect(miniRail.getByTestId('mission-discovery')).toContainText('Suggestion: lock framing now');
 
-  await page.keyboard.press('f');
+  await miniRail.getByTestId('mission-discovery').getByRole('button', { name: 'Set 9:16' }).click();
   await expect(page.getByTestId('mission-step-frame')).toHaveClass(/done/);
 });

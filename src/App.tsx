@@ -806,6 +806,58 @@ function App() {
     exportDuration
   ]);
 
+  const missionDiscovery = useMemo(() => {
+    const firstActionableStep = missionRailSteps.find((step) => step.status === 'active' || step.status === 'ready');
+    if (!firstActionableStep) return undefined;
+
+    if (firstActionableStep.id === 'source') {
+      return {
+        actionLabel: firstActionableStep.actionLabel,
+        keyHint: 'I',
+        label: `Suggestion: start with one local clip (${firstActionableStep.actionLabel.toLowerCase()})`,
+        onAction: firstActionableStep.onAction
+      };
+    }
+
+    if (firstActionableStep.id === 'frame') {
+      return {
+        actionLabel: firstActionableStep.actionLabel,
+        keyHint: 'F',
+        label: 'Suggestion: lock framing now for a social-ready canvas',
+        onAction: firstActionableStep.onAction
+      };
+    }
+
+    if (firstActionableStep.id === 'captions') {
+      return {
+        actionLabel: firstActionableStep.actionLabel,
+        keyHint: 'C',
+        label: hasCaptionWork
+          ? 'Suggestion: tune existing captions in the captions panel'
+          : 'Suggestion: add captions for muted replay',
+        onAction: firstActionableStep.onAction
+      };
+    }
+
+    if (firstActionableStep.id === 'export') {
+      return canExport
+        ? {
+            actionLabel: firstActionableStep.actionLabel,
+            keyHint: 'E',
+            label: 'Suggestion: lock and export the MP4 now',
+            onAction: firstActionableStep.onAction
+          }
+        : {
+            actionLabel: firstActionableStep.actionLabel,
+            keyHint: firstActionableStep.actionLabel.includes('Full') ? 'R' : 'E',
+            label: 'Suggestion: prepare the trim range so export can launch',
+            onAction: firstActionableStep.onAction
+          };
+    }
+
+    return undefined;
+  }, [canExport, hasCaptionWork, missionRailSteps]);
+
   useEffect(() => {
     const isTypingTarget = (target: EventTarget | null) => {
       if (!(target instanceof HTMLElement)) return false;
@@ -1298,7 +1350,12 @@ function App() {
               progressTotal={4}
             />
           ) : (
-            <MissionRail steps={missionRailSteps} hint={`Mission map ${quickStartHint}`} onOpenMap={openQuickStart} />
+            <MissionRail
+              discovery={missionDiscovery}
+              steps={missionRailSteps}
+              hint={`Mission map ${quickStartHint}`}
+              onOpenMap={openQuickStart}
+            />
           )}
           <ProjectPanel
             mediaName={file?.name ?? projectMediaName}

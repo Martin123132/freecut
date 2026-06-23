@@ -467,6 +467,59 @@ button {
   opacity: 0.4;
 }
 
+.mission-rail-discovery {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px dashed rgba(142, 224, 95, 0.32);
+  background: rgba(142, 224, 95, 0.07);
+  color: var(--text);
+  font-size: 11px;
+}
+
+.mission-rail-discovery span {
+  min-width: 0;
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mission-rail-discovery span em {
+  color: var(--accent);
+  font-style: normal;
+  font-size: 10px;
+  font-weight: 900;
+  margin-left: 6px;
+}
+
+.mission-rail-discovery-button {
+  justify-self: end;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #1e1d1a;
+  color: var(--text);
+  font-size: 10px;
+  font-weight: 900;
+  padding: 0 9px;
+  min-height: 22px;
+  cursor: pointer;
+}
+
+.mission-rail-discovery-button:hover:not(:disabled) {
+  border-color: #7cb34b;
+}
+
+.mission-rail-discovery-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
 .quick-start-mini-action {
   display: inline-flex;
   align-items: center;

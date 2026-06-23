@@ -11,7 +11,16 @@ export type MissionRailStep = {
   disabled?: boolean;
 };
 
+type MissionRailDiscovery = {
+  actionLabel: string;
+  disabled?: boolean;
+  keyHint?: string;
+  label: string;
+  onAction: () => void;
+};
+
 type MissionRailProps = {
+  discovery?: MissionRailDiscovery;
   hint: string;
   onOpenMap: () => void;
   steps: MissionRailStep[];
@@ -24,7 +33,7 @@ const iconByStatus: Record<string, ReactNode> = {
   locked: <Lock size={14} />
 };
 
-export function MissionRail({ hint, onOpenMap, steps }: MissionRailProps) {
+export function MissionRail({ discovery, hint, onOpenMap, steps }: MissionRailProps) {
   return (
     <section className="quick-start-mini" aria-label="Mission path rail" data-testid="quick-start-mini">
       <div className="mission-rail-header">
@@ -37,6 +46,23 @@ export function MissionRail({ hint, onOpenMap, steps }: MissionRailProps) {
           Open map
         </button>
       </div>
+      {discovery ? (
+        <div className="mission-rail-discovery" data-testid="mission-discovery">
+          <span>
+            {discovery.label}
+            {discovery.keyHint ? <em> Shortcut: {discovery.keyHint}</em> : null}
+          </span>
+          <button
+            className="mission-rail-discovery-button"
+            type="button"
+            disabled={discovery.disabled}
+            onClick={discovery.onAction}
+            title={discovery.disabled ? 'Need previous steps first' : discovery.actionLabel}
+          >
+            {discovery.actionLabel}
+          </button>
+        </div>
+      ) : null}
 
       <ol className="mission-rail-steps">
         {steps.map((step, index) => (

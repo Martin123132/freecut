@@ -33,6 +33,39 @@ const exportProfiles = {
     audioBitrate: '192k'
   }
 };
+const captionStyles = {
+  clean: {
+    id: 'clean',
+    fontColor: 'white',
+    box: true,
+    boxColor: 'black@0.72',
+    boxBorderFactor: 0.36,
+    borderFactor: 0,
+    fontsizeFactor: 0.038,
+    uppercase: false
+  },
+  'bold-box': {
+    id: 'bold-box',
+    fontColor: 'black',
+    box: true,
+    boxColor: 'white@0.94',
+    boxBorderFactor: 0.42,
+    borderFactor: 0.05,
+    borderColor: 'black@0.84',
+    fontsizeFactor: 0.04,
+    uppercase: false
+  },
+  'shorts-pop': {
+    id: 'shorts-pop',
+    fontColor: '0xFFE94A',
+    box: false,
+    borderFactor: 0.14,
+    borderColor: 'black@0.95',
+    shadow: true,
+    fontsizeFactor: 0.046,
+    uppercase: true
+  }
+};
 
 function assertDDrive(targetPath) {
   const root = path.parse(path.resolve(targetPath)).root.toUpperCase();
@@ -109,6 +142,7 @@ app.post('/api/export', upload.single('video'), async (request, response) => {
     const cropY = readNumber(request.body.cropY, 50, 0, 100);
     const overlayText = String(request.body.overlayText || '').trim();
     const exportProfile = readExportProfile(request.body.exportProfileId);
+    const captionStyle = readCaptionStyle(request.body.captionStyleId);
     const duration = Math.max(0.1, trimEnd - trimStart);
     const captions = parseCaptions(request.body.captions, trimStart, duration);
     const filter = buildVideoFilter({
@@ -120,6 +154,7 @@ app.post('/api/export', upload.single('video'), async (request, response) => {
       overlaySize,
       cropX,
       cropY,
+      captionStyle,
       captions
     });
 
@@ -263,6 +298,7 @@ function createExportPlan(body, inputPath) {
   const cropY = readNumber(body.cropY, 50, 0, 100);
   const overlayText = String(body.overlayText || '').trim();
   const exportProfile = readExportProfile(body.exportProfileId);
+  const captionStyle = readCaptionStyle(body.captionStyleId);
   const duration = Math.max(0.1, trimEnd - trimStart);
   const captions = parseCaptions(body.captions, trimStart, duration);
   const filter = buildVideoFilter({
@@ -274,6 +310,7 @@ function createExportPlan(body, inputPath) {
     overlaySize,
     cropX,
     cropY,
+    captionStyle,
     captions
   });
 
@@ -347,7 +384,7 @@ function toJobStatus(job) {
   };
 }
 
-function buildVideoFilter({ width, height, overlayText, overlayX, overlayY, overlaySize, cropX, cropY, captions }) {
+function buildVideoFilter({ width, height, overlayText, overlayX, overlayY, overlaySize, cropX, cropY, captionStyle, captions }) {
   const filters = [
     `scale=${width}:${height}:force_original_aspect_ratio=increase`,
     `crop=${width}:${height}:(in_w-out_w)*${cropX / 100}:(in_h-out_h)*${cropY / 100}`,
@@ -364,13 +401,43 @@ function buildVideoFilter({ width, height, overlayText, overlayX, overlayY, over
   }
 
   captions.forEach((caption) => {
-    const fontsize = Math.max(26, Math.round(height * 0.038));
-    filters.push(
-      `drawtext=text='${escapeDrawText(caption.text)}'${fontOption}:fontcolor=white:fontsize=${fontsize}:box=1:boxcolor=black@0.72:boxborderw=${Math.round(fontsize * 0.36)}:x=(w-text_w)/2:y=h-(text_h*2.4):enable='between(t,${caption.start.toFixed(3)},${caption.end.toFixed(3)})'`
-    );
+    filters.push(buildCaptionFilter({ caption, captionStyle, fontOption, height }));
   });
 
   return filters.join(',');
+}
+
+function buildCaptionFilter({ caption, captionStyle, fontOption, height }) {
+  const fontsize = Math.max(26, Math.round(height * captionStyle.fontsizeFactor));
+  const text = captionStyle.uppercase ? caption.text.toUpperCase() : caption.text;
+  const options = [
+    `text='${escapeDrawText(text)}'`,
+    fontOption.replace(/^:/, ''),
+    `fontcolor=${captionStyle.fontColor}`,
+    `fontsize=${fontsize}`,
+    `x=(w-text_w)/2`,
+    `y=h-(text_h*2.4)`,
+    `enable='between(t,${caption.start.toFixed(3)},${caption.end.toFixed(3)})'`
+  ].filter(Boolean);
+
+  if (captionStyle.box) {
+    options.push('box=1');
+    options.push(`boxcolor=${captionStyle.boxColor}`);
+    options.push(`boxborderw=${Math.round(fontsize * captionStyle.boxBorderFactor)}`);
+  }
+
+  if (captionStyle.borderFactor) {
+    options.push(`borderw=${Math.max(2, Math.round(fontsize * captionStyle.borderFactor))}`);
+    options.push(`bordercolor=${captionStyle.borderColor}`);
+  }
+
+  if (captionStyle.shadow) {
+    options.push('shadowx=2');
+    options.push('shadowy=3');
+    options.push('shadowcolor=black@0.72');
+  }
+
+  return `drawtext=${options.join(':')}`;
 }
 
 function resolveDefaultFont() {
@@ -413,6 +480,11 @@ function readNumber(value, fallback, min, max) {
 function readExportProfile(value) {
   const key = String(value || 'balanced');
   return exportProfiles[key] || exportProfiles.balanced;
+}
+
+function readCaptionStyle(value) {
+  const key = String(value || 'clean');
+  return captionStyles[key] || captionStyles.clean;
 }
 
 function escapeDrawText(value) {

@@ -11,7 +11,7 @@ Public demo page: https://martin123132.github.io/freecut/
 - Set trim start/end with a media-aware thumbnail timeline
 - Choose an export aspect ratio and reframe the crop focus
 - Add a text overlay
-- Add timed captions or import SRT/VTT captions
+- Add timed captions, caption style presets, or import SRT/VTT captions
 - Autosave project settings locally and import/export `.freecut.json` project files
 - Restore a saved project with guided source-clip relink and preserved trim timing
 - Check export readiness with a guided ship preflight
@@ -20,11 +20,11 @@ Public demo page: https://martin123132.github.io/freecut/
 
 ## Development
 
-All project files are intended to live under `D:\codex-projects\open-video-editor`.
-Keep npm, Playwright, and temporary caches on the D drive when developing on this machine.
+Keep project files, npm, Playwright, and temporary caches on the D drive when developing on this machine. For a fresh public clone, use a FreeCut-named folder such as `D:\codex-projects\freecut`.
 
 ```powershell
-cd D:\codex-projects\open-video-editor
+git clone https://github.com/Martin123132/freecut.git D:\codex-projects\freecut
+cd D:\codex-projects\freecut
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\dev-env.ps1 npm.cmd run doctor
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\dev-env.ps1 npm.cmd install
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\dev-env.ps1 npm.cmd run dev
@@ -37,7 +37,7 @@ The API listens on `127.0.0.1:5174`; Vite listens on `127.0.0.1:5173`.
 The native OS file-picker window is not reliably automatable. The import-transition smoke verifies the same app path immediately behind that picker by setting the real file input to a generated WebM clip, waiting for browser media metadata, and checking that the FreeCut dock reaches export-ready state.
 
 ```powershell
-cd D:\codex-projects\open-video-editor
+cd D:\codex-projects\freecut
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\dev-env.ps1 npm.cmd run doctor
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\dev-env.ps1 npm.cmd run qa:import-transition
 ```

@@ -1,6 +1,7 @@
 import { FolderOpen, Pause, Play, RotateCcw } from 'lucide-react';
 import { RefObject } from 'react';
 import { CaptionCue } from '../lib/captions';
+import { CaptionStyle } from '../lib/captionStyles';
 import { AspectPreset } from '../lib/presets';
 import { formatTime } from '../lib/format';
 
@@ -14,6 +15,7 @@ type StageProps = {
   trimStart: number;
   trimEnd: number;
   activeCaptions: CaptionCue[];
+  captionStyle: CaptionStyle;
   missingMediaName: string | null;
   overlayText: string;
   overlayX: number;
@@ -39,6 +41,7 @@ export function Stage({
   trimStart,
   trimEnd,
   activeCaptions,
+  captionStyle,
   missingMediaName,
   overlayText,
   overlayX,
@@ -93,7 +96,7 @@ export function Stage({
               {activeCaptions.length ? (
                 <div className="stage-caption-stack">
                   {activeCaptions.map((caption) => (
-                    <div className="stage-caption-text" key={caption.id}>
+                    <div className={`stage-caption-text ${captionStyle.className}`} key={caption.id}>
                       {caption.text}
                     </div>
                   ))}

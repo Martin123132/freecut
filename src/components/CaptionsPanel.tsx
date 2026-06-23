@@ -1,19 +1,24 @@
 import { Captions, FileUp, Plus, Trash2 } from 'lucide-react';
 import { CaptionCue, createCaptionCue, parseCaptionFile } from '../lib/captions';
+import { CaptionStyle, captionStyles } from '../lib/captionStyles';
 import { clamp, formatTime } from '../lib/format';
 
 type CaptionsPanelProps = {
   captions: CaptionCue[];
+  captionStyle: CaptionStyle;
   currentTime: number;
   duration: number;
+  onCaptionStyleChange: (style: CaptionStyle) => void;
   onCaptionsChange: (captions: CaptionCue[]) => void;
   onSeek: (time: number) => void;
 };
 
 export function CaptionsPanel({
   captions,
+  captionStyle,
   currentTime,
   duration,
+  onCaptionStyleChange,
   onCaptionsChange,
   onSeek
 }: CaptionsPanelProps) {
@@ -70,6 +75,22 @@ export function CaptionsPanel({
             <Plus size={14} />
           </button>
         </div>
+      </div>
+
+      <div className="caption-style-grid" role="radiogroup" aria-label="Caption style">
+        {captionStyles.map((style) => (
+          <button
+            className={style.id === captionStyle.id ? 'caption-style active' : 'caption-style'}
+            type="button"
+            role="radio"
+            aria-checked={style.id === captionStyle.id}
+            key={style.id}
+            onClick={() => onCaptionStyleChange(style)}
+          >
+            <strong>{style.label}</strong>
+            <span>{style.detail}</span>
+          </button>
+        ))}
       </div>
 
       <div className="caption-list">

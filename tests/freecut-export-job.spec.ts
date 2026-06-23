@@ -87,9 +87,12 @@ test('export job progress reaches ready state', async ({ page }, testInfo) => {
 
   await importSmokeClip(page, testInfo);
   await page.locator('.preset', { hasText: '9:16' }).click();
+  await page.getByRole('button', { name: 'Add caption' }).click();
+  await page.getByRole('radio', { name: /Shorts Pop/ }).click();
   await setRangeValue(page, 'Focus X', '80');
   await setRangeValue(page, 'Focus Y', '35');
   await expect(page.locator('video')).toHaveCSS('object-position', '80% 35%');
+  await expect(page.locator('.stage-caption-text')).toHaveClass(/caption-style-shorts-pop/);
 
   await page.getByTestId('next-move').click();
   await expect(page.getByTestId('export-status')).toContainText(/Queued export|Rendering MP4|Uploading source clip/);
@@ -97,6 +100,8 @@ test('export job progress reaches ready state', async ({ page }, testInfo) => {
   await expect(page.getByRole('button', { name: 'Download again' })).toBeVisible();
   expect(exportBody).toMatch(/name="cropX"[\s\S]*80/);
   expect(exportBody).toMatch(/name="cropY"[\s\S]*35/);
+  expect(exportBody).toMatch(/name="captionStyleId"[\s\S]*shorts-pop/);
+  expect(exportBody).toMatch(/name="captions"[\s\S]*New caption/);
   expect(exportBody).toMatch(/name="width"[\s\S]*1080/);
   expect(exportBody).toMatch(/name="height"[\s\S]*1920/);
 });

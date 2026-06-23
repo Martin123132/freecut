@@ -1,5 +1,6 @@
 import { AlignCenter, Crosshair, Crop, Type } from 'lucide-react';
 import { CaptionCue } from '../lib/captions';
+import { CaptionStyle } from '../lib/captionStyles';
 import { ExportProfile } from '../lib/exportProfiles';
 import { AspectPreset, aspectPresets } from '../lib/presets';
 import { CaptionsPanel } from './CaptionsPanel';
@@ -9,6 +10,7 @@ import { OutputPanel } from './OutputPanel';
 type InspectorProps = {
   preset: AspectPreset;
   exportProfile: ExportProfile;
+  captionStyle: CaptionStyle;
   preflightItems: PreflightItem[];
   preflightPrimaryLabel: string;
   preflightPrimaryDisabled: boolean;
@@ -23,6 +25,7 @@ type InspectorProps = {
   cropX: number;
   cropY: number;
   onCaptionsChange: (captions: CaptionCue[]) => void;
+  onCaptionStyleChange: (style: CaptionStyle) => void;
   onExportProfileChange: (profile: ExportProfile) => void;
   onPresetChange: (preset: AspectPreset) => void;
   onOverlayTextChange: (value: string) => void;
@@ -39,6 +42,7 @@ type InspectorProps = {
 export function Inspector({
   preset,
   exportProfile,
+  captionStyle,
   preflightItems,
   preflightPrimaryLabel,
   preflightPrimaryDisabled,
@@ -53,6 +57,7 @@ export function Inspector({
   cropX,
   cropY,
   onCaptionsChange,
+  onCaptionStyleChange,
   onExportProfileChange,
   onPresetChange,
   onOverlayTextChange,
@@ -187,8 +192,10 @@ export function Inspector({
 
       <CaptionsPanel
         captions={captions}
+        captionStyle={captionStyle}
         currentTime={currentTime}
         duration={duration}
+        onCaptionStyleChange={onCaptionStyleChange}
         onCaptionsChange={onCaptionsChange}
         onSeek={onSeek}
       />

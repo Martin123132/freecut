@@ -1,4 +1,5 @@
 import { CaptionCue, normalizeCaptions } from './captions';
+import { captionStyleFromId, CaptionStyleId, defaultCaptionStyle } from './captionStyles';
 import { defaultExportProfile, exportProfileFromId, ExportProfileId } from './exportProfiles';
 import { AspectPreset, aspectPresets } from './presets';
 
@@ -10,6 +11,7 @@ export type ProjectSnapshot = {
   mediaName: string | null;
   presetId: string;
   exportProfileId: ExportProfileId;
+  captionStyleId: CaptionStyleId;
   trimStart: number;
   trimEnd: number;
   overlayText: string;
@@ -77,6 +79,7 @@ function sanitizeProjectSnapshot(input: Partial<ProjectSnapshot>): ProjectSnapsh
     mediaName: typeof input.mediaName === 'string' && input.mediaName.trim() ? input.mediaName.trim() : null,
     presetId,
     exportProfileId: exportProfileFromId(input.exportProfileId ?? defaultExportProfile.id).id,
+    captionStyleId: captionStyleFromId(input.captionStyleId ?? defaultCaptionStyle.id).id,
     trimStart,
     trimEnd,
     overlayText: typeof input.overlayText === 'string' ? input.overlayText : '',

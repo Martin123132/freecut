@@ -9,6 +9,7 @@ import { ProjectPanel } from './components/ProjectPanel';
 import { PreflightItem } from './components/ExportPreflight';
 import { SettingsPanel } from './components/SettingsPanel';
 import { CaptionCue, createCaptionCue, normalizeCaptions } from './lib/captions';
+import { CaptionStyle, captionStyleFromId, defaultCaptionStyle } from './lib/captionStyles';
 import { ExportProfile, defaultExportProfile, exportProfileFromId } from './lib/exportProfiles';
 import { bytesToSize, clamp, formatTime } from './lib/format';
 import {
@@ -61,6 +62,7 @@ function App() {
   const [trimEnd, setTrimEnd] = useState(0);
   const [preset, setPreset] = useState<AspectPreset>(aspectPresets[0]);
   const [exportProfile, setExportProfile] = useState<ExportProfile>(defaultExportProfile);
+  const [captionStyle, setCaptionStyle] = useState<CaptionStyle>(defaultCaptionStyle);
   const [captions, setCaptions] = useState<CaptionCue[]>([]);
   const [overlayText, setOverlayText] = useState(defaultOverlayText);
   const [overlayX, setOverlayX] = useState(50);
@@ -162,6 +164,7 @@ function App() {
     () =>
       JSON.stringify({
         captions: normalizeCaptions(captions, duration),
+        captionStyleId: captionStyle.id,
         exportProfileId: exportProfile.id,
         fileName: file?.name ?? projectMediaName,
         cropX,
@@ -174,7 +177,7 @@ function App() {
         trimEnd,
         trimStart
       }),
-    [captions, cropX, cropY, duration, exportProfile.id, file, overlaySize, overlayText, overlayX, overlayY, preset.id, projectMediaName, trimEnd, trimStart]
+    [captions, captionStyle.id, cropX, cropY, duration, exportProfile.id, file, overlaySize, overlayText, overlayX, overlayY, preset.id, projectMediaName, trimEnd, trimStart]
   );
   const latestExportIsCurrent = Boolean(latestExport && latestExport.projectKey === exportProjectKey);
   useEffect(() => {
@@ -192,7 +195,7 @@ function App() {
     const snapshot = buildProjectSnapshot();
     writeStoredProject(snapshot);
     setProjectStatus('Autosaved');
-  }, [captions, cropX, cropY, exportProfile, file, overlaySize, overlayText, overlayX, overlayY, preset, projectMediaName, trimEnd, trimStart]);
+  }, [captions, captionStyle, cropX, cropY, exportProfile, file, overlaySize, overlayText, overlayX, overlayY, preset, projectMediaName, trimEnd, trimStart]);
 
   const handleSelectFile = (nextFile: File) => {
     const expectedMediaName = projectMediaName;
@@ -308,6 +311,11 @@ function App() {
     setCaptions(nextCaptions);
   };
 
+  const updateCaptionStyle = (nextStyle: CaptionStyle) => {
+    autosaveArmedRef.current = true;
+    setCaptionStyle(nextStyle);
+  };
+
   const updateOverlayText = (value: string) => {
     autosaveArmedRef.current = true;
     setOverlayText(value);
@@ -370,6 +378,7 @@ function App() {
       mediaName: file?.name ?? projectMediaName,
       presetId: preset.id,
       exportProfileId: exportProfile.id,
+      captionStyleId: captionStyle.id,
       trimStart,
       trimEnd,
       overlayText,
@@ -398,6 +407,7 @@ function App() {
     setProjectMediaName(snapshot.mediaName);
     setPreset(presetFromProject(snapshot));
     setExportProfile(exportProfileFromId(snapshot.exportProfileId));
+    setCaptionStyle(captionStyleFromId(snapshot.captionStyleId));
     setTrimStart(snapshot.trimStart);
     setTrimEnd(snapshot.trimEnd);
     setCurrentTime(snapshot.trimStart);
@@ -461,6 +471,7 @@ function App() {
     setProjectMediaName(file?.name ?? null);
     setPreset(aspectPresets[0]);
     setExportProfile(defaultExportProfile);
+    setCaptionStyle(defaultCaptionStyle);
     setCaptions([]);
     setOverlayText(defaultOverlayText);
     setOverlayX(50);
@@ -513,6 +524,7 @@ function App() {
     payload.append('width', String(preset.width));
     payload.append('height', String(preset.height));
     payload.append('exportProfileId', exportProfile.id);
+    payload.append('captionStyleId', captionStyle.id);
     payload.append('overlayText', overlayText);
     payload.append('overlayX', String(overlayX));
     payload.append('overlayY', String(overlayY));
@@ -826,6 +838,7 @@ function App() {
           trimStart={trimStart}
           trimEnd={trimEnd}
           activeCaptions={activeCaptions}
+          captionStyle={captionStyle}
           missingMediaName={needsMediaRelink ? projectMediaName : null}
           overlayText={overlayText}
           overlayX={overlayX}
@@ -843,6 +856,7 @@ function App() {
         <Inspector
           preset={preset}
           exportProfile={exportProfile}
+          captionStyle={captionStyle}
           captions={captions}
           currentTime={currentTime}
           duration={duration}
@@ -857,6 +871,7 @@ function App() {
           cropX={cropX}
           cropY={cropY}
           onCaptionsChange={updateCaptions}
+          onCaptionStyleChange={updateCaptionStyle}
           onExportProfileChange={updateExportProfile}
           onPresetChange={updatePreset}
           onOverlayTextChange={updateOverlayText}

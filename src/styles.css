@@ -424,6 +424,62 @@ button {
   border-color: var(--accent-ink);
 }
 
+.shortcut-strip {
+  margin-top: 14px;
+  padding: 12px;
+  background: #1d1c1a;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.shortcut-strip-kicker {
+  display: inline-flex;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.shortcut-strip-list {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.shortcut-strip-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 24px;
+  padding: 6px 8px;
+  color: var(--text);
+  background: var(--panel-strong);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font-size: 11px;
+  user-select: none;
+}
+
+.shortcut-strip-item kbd {
+  min-width: 26px;
+  padding: 2px 6px;
+  color: var(--accent-ink);
+  background: var(--accent);
+  border-radius: 5px;
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace);
+  font-size: 10px;
+  font-weight: 900;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.shortcut-strip-item span.disabled {
+  color: var(--faint);
+}
+
 .media-name {
   color: var(--text);
   font-size: 13px;

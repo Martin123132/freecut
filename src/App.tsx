@@ -9,6 +9,7 @@ import { ProjectPanel } from './components/ProjectPanel';
 import { PreflightItem } from './components/ExportPreflight';
 import { SettingsPanel } from './components/SettingsPanel';
 import { QuickStartPanel } from './components/QuickStartPanel';
+import { ShortcutHintStrip } from './components/ShortcutHintStrip';
 import { CaptionCue, createCaptionCue, normalizeCaptions } from './lib/captions';
 import { CaptionStyle, captionStyleFromId, defaultCaptionStyle } from './lib/captionStyles';
 import { buildExportReadiness } from './lib/exportEstimate';
@@ -702,6 +703,85 @@ function App() {
   };
 
   const requestMedia = () => mediaInputRef.current?.click();
+  useEffect(() => {
+    const isTypingTarget = (target: EventTarget | null) => {
+      if (!(target instanceof HTMLElement)) return false;
+      return (
+        target.tagName === 'BUTTON' ||
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.contentEditable === 'true' ||
+        target.isContentEditable
+      );
+    };
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      if (isTypingTarget(event.target)) return;
+
+      const normalized = event.key.toLowerCase();
+      const isSpace = normalized === ' ' || normalized === 'spacebar' || event.code === 'Space';
+
+      if (isSpace && file && duration) {
+        event.preventDefault();
+        void playPause();
+        return;
+      }
+
+      if (normalized === 'i') {
+        event.preventDefault();
+        requestMedia();
+        return;
+      }
+
+      if (normalized === 'c' && file) {
+        event.preventDefault();
+        addGuidedCaption();
+        return;
+      }
+
+      if (normalized === 'e' && file) {
+        event.preventDefault();
+        if (exportState === 'exporting') {
+          cancelExport();
+        } else if (canExport) {
+          void exportClip();
+        }
+        return;
+      }
+
+      if (normalized === 's') {
+        event.preventDefault();
+        setSettingsOpen(true);
+        return;
+      }
+
+      if (normalized === 'f' && preset.id !== 'vertical') {
+        event.preventDefault();
+        chooseVerticalFormat();
+        return;
+      }
+
+      if (normalized === 'r' && file && duration && !canExport) {
+        event.preventDefault();
+        resetTrimToFull();
+        return;
+      }
+
+      if (file && duration && (normalized === 'arrowleft' || normalized === 'arrowright')) {
+        const delta = normalized === 'arrowleft' ? -1 : 1;
+        const nextTime = clamp(currentTime + delta, 0, duration);
+        event.preventDefault();
+        seek(nextTime);
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [addGuidedCaption, canExport, chooseVerticalFormat, cancelExport, currentTime, duration, exportClip, exportState, file, playPause, preset.id, requestMedia, resetTrimToFull, seek]);
+
   const preflightItems: PreflightItem[] = [
     {
       id: 'source',
@@ -770,6 +850,49 @@ function App() {
     if (!file) requestMedia();
     if (file && duration) resetTrimToFull();
   };
+
+  const shortcutHints = [
+    { keyHint: 'I', label: 'Import clip', enabled: true },
+    {
+      keyHint: 'Space',
+      label: file ? (isPlaying ? 'Pause' : 'Play') : 'Play (load clip)',
+      enabled: Boolean(file && duration),
+      disabledReason: file ? undefined : 'Load a clip first'
+    },
+    {
+      keyHint: 'C',
+      label: 'Add caption',
+      enabled: Boolean(file),
+      disabledReason: file ? undefined : 'Load a clip first'
+    },
+    {
+      keyHint: 'F',
+      label: '9:16 frame',
+      enabled: preset.id !== 'vertical',
+      disabledReason: 'Frame already set'
+    },
+    {
+      keyHint: 'R',
+      label: 'Reset trim',
+      enabled: Boolean(file && duration && !canExport),
+      disabledReason: canExport ? 'Range already full/ready' : file ? 'Range trims loaded' : 'Load a clip first'
+    },
+    {
+      keyHint: 'E',
+      label: exportState === 'exporting' ? 'Cancel export' : 'Export',
+      enabled: exportState === 'exporting' || canExport
+    },
+    {
+      keyHint: 'S',
+      label: 'Settings',
+      enabled: true
+    },
+    {
+      keyHint: 'Left/Right',
+      label: 'Nudge trim preview',
+      enabled: Boolean(file && duration)
+    }
+  ];
 
   const workflowSteps: WorkflowStep[] = [
     {
@@ -886,6 +1009,7 @@ function App() {
           onSelectFile={handleSelectFile}
           onRequestMedia={requestMedia}
         >
+          <ShortcutHintStrip items={shortcutHints} />
           {showQuickStart && !file ? (
             <QuickStartPanel
               canAddCaptions={Boolean(file)}

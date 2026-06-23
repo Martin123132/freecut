@@ -10,6 +10,7 @@ import { PreflightItem } from './components/ExportPreflight';
 import { SettingsPanel } from './components/SettingsPanel';
 import { QuickStartPanel } from './components/QuickStartPanel';
 import { ShortcutHintStrip } from './components/ShortcutHintStrip';
+import { CommandAction, CommandPalette } from './components/CommandPalette';
 import { CaptionCue, createCaptionCue, normalizeCaptions } from './lib/captions';
 import { CaptionStyle, captionStyleFromId, defaultCaptionStyle } from './lib/captionStyles';
 import { buildExportReadiness } from './lib/exportEstimate';
@@ -77,6 +78,7 @@ function App() {
   const [apiHealth, setApiHealth] = useState<ApiHealth | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [showQuickStart, setShowQuickStart] = useState(false);
+  const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [projectStatus, setProjectStatus] = useState('Autosave ready');
   const [projectMediaName, setProjectMediaName] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -717,10 +719,22 @@ function App() {
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.metaKey || event.ctrlKey || event.altKey) return;
-      if (isTypingTarget(event.target)) return;
 
       const normalized = event.key.toLowerCase();
       const isSpace = normalized === ' ' || normalized === 'spacebar' || event.code === 'Space';
+      const isQuestionCommand = normalized === '?' || (normalized === '/' && event.shiftKey);
+      if (isQuestionCommand) {
+        event.preventDefault();
+        setShowCommandPalette((current) => !current);
+        return;
+      }
+
+      if (event.shiftKey && normalized === 'k') {
+        event.preventDefault();
+        setShowCommandPalette(true);
+        return;
+      }
+      if (isTypingTarget(event.target)) return;
 
       if (isSpace && file && duration) {
         event.preventDefault();
@@ -781,6 +795,22 @@ function App() {
       window.removeEventListener('keydown', onKeyDown);
     };
   }, [addGuidedCaption, canExport, chooseVerticalFormat, cancelExport, currentTime, duration, exportClip, exportState, file, playPause, preset.id, requestMedia, resetTrimToFull, seek]);
+
+  useEffect(() => {
+    if (!showCommandPalette) return;
+    const handleClose = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setShowCommandPalette(false);
+      }
+    };
+    window.addEventListener('keydown', handleClose);
+    return () => window.removeEventListener('keydown', handleClose);
+  }, [showCommandPalette]);
+
+  const closeCommandPalette = () => {
+    setShowCommandPalette(false);
+  };
 
   const preflightItems: PreflightItem[] = [
     {
@@ -893,6 +923,105 @@ function App() {
       enabled: Boolean(file && duration)
     }
   ];
+
+  const commandActions = useMemo<CommandAction[]>(() => {
+    const canPlayPause = Boolean(file && duration);
+    const canAddCaption = Boolean(file);
+    const canExportAction = canExport || exportState === 'exporting';
+    const canFrame = preset.id !== 'vertical';
+    const canResetTrim = Boolean(file && duration && !canExport);
+
+    return [
+      {
+        id: 'import',
+        label: 'Import clip',
+        description: projectMediaName ? `Relink ${projectMediaName}` : 'Choose a local video source',
+        keyHint: 'I',
+        onActivate: requestMedia,
+        disabled: false
+      },
+      {
+        id: 'playpause',
+        label: isPlaying ? 'Pause playback' : 'Play playback',
+        description: canPlayPause ? 'Preview the current section' : 'Load a clip first',
+        keyHint: 'Space',
+        onActivate: playPause,
+        disabled: !canPlayPause
+      },
+      {
+        id: 'caption',
+        label: 'Add a caption cue',
+        description: canAddCaption ? 'Insert a new cue at the current time' : 'Load a clip first',
+        keyHint: 'C',
+        onActivate: addGuidedCaption,
+        disabled: !canAddCaption
+      },
+      {
+        id: 'frame',
+        label: 'Set 9:16 frame',
+        description: canFrame ? 'Align to the social cut size' : 'Already in vertical frame',
+        keyHint: 'F',
+        onActivate: chooseVerticalFormat,
+        disabled: !canFrame
+      },
+      {
+        id: 'trim',
+        label: 'Reset trim',
+        description: canResetTrim ? 'Cover the full clip' : 'Trim is already full-length',
+        keyHint: 'R',
+        onActivate: resetTrimToFull,
+        disabled: !canResetTrim,
+        disabledReason: canExport ? 'Range ready' : file ? undefined : 'Load a clip first'
+      },
+      {
+        id: 'export',
+        label: exportState === 'exporting' ? 'Cancel export' : 'Start export',
+        description: canExportAction ? 'Run or stop render to MP4' : 'Finish setup and load a valid range',
+        keyHint: 'E',
+        onActivate: () => {
+          if (exportState === 'exporting') {
+            cancelExport();
+            return;
+          }
+
+          if (canExport) void exportClip();
+        },
+        disabled: !canExportAction
+      },
+      {
+        id: 'settings',
+        label: 'Open settings',
+        description: 'Review export history and project state',
+        keyHint: 'S',
+        onActivate: () => setSettingsOpen(true),
+        disabled: false
+      },
+      {
+        id: 'start',
+        label: 'Project quick-start',
+        description: 'Review the first-step mission path',
+        keyHint: 'Q',
+        onActivate: dismissQuickStart,
+        disabled: false
+      }
+    ];
+  }, [
+    addGuidedCaption,
+    canExport,
+    cancelExport,
+    chooseVerticalFormat,
+    exportClip,
+    exportState,
+    file,
+    isPlaying,
+    playPause,
+    preset.id,
+    projectMediaName,
+    requestMedia,
+    resetTrimToFull,
+    dismissQuickStart,
+    duration
+  ]);
 
   const workflowSteps: WorkflowStep[] = [
     {
@@ -1178,6 +1307,7 @@ function App() {
           onSaveProject={saveProjectFile}
         />
       ) : null}
+      <CommandPalette actions={commandActions} open={showCommandPalette} onClose={closeCommandPalette} />
     </div>
   );
 }

@@ -331,6 +331,12 @@ button {
   border-radius: var(--radius);
 }
 
+.quick-start-mini-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
 .quick-start-mini span {
   display: inline-flex;
   align-items: baseline;
@@ -342,6 +348,11 @@ button {
 
 .quick-start-mini strong {
   color: var(--accent);
+}
+
+.quick-start-mini small {
+  color: var(--muted);
+  font-size: 11px;
 }
 
 .quick-start-mini-action {

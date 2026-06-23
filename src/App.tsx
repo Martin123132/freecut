@@ -181,6 +181,25 @@ function App() {
   const quickStartProgress = [Boolean(file), preset.id === 'vertical', hasCaptionWork, canExport].filter(Boolean).length;
   const needsMediaRelink = Boolean(projectMediaName && !file);
   const exportDuration = canExport ? Math.max(0, trimEnd - trimStart) : 0;
+  const quickStartHint = useMemo(() => {
+    if (needsMediaRelink) {
+      return `Relink ${projectMediaName} to reopen this path.`;
+    }
+    if (!file) {
+      return 'Next: import a local clip.';
+    }
+    if (preset.id !== 'vertical') {
+      return 'Next: set the 9:16 frame for short-form export.';
+    }
+    if (!hasCaptionWork) {
+      return 'Optional: add captions for muted viewing.';
+    }
+    if (!canExport) {
+      return 'Next: set a valid trim range, then ship.';
+    }
+
+    return 'Mission ready — export is local.';
+  }, [canExport, file, hasCaptionWork, needsMediaRelink, preset.id, projectMediaName]);
   const exportReadiness = useMemo(
     () =>
       buildExportReadiness({
@@ -1191,9 +1210,10 @@ function App() {
             />
           ) : (
             <section className="quick-start-mini" aria-label="Mission path summary" data-testid="quick-start-mini">
-              <span>
-                Mission map <strong>{quickStartProgress}/4</strong>
-              </span>
+              <div className="quick-start-mini-copy">
+                <span>Mission map <strong>{quickStartProgress}/4</strong></span>
+                <small>{quickStartHint}</small>
+              </div>
               <button className="quick-start-mini-action" type="button" onClick={openQuickStart}>
                 <MapPinned size={12} />
                 Open map

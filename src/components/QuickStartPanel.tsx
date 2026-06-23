@@ -79,7 +79,7 @@ export function QuickStartPanel({
           <span className="quick-start-badge">2</span>
           <div className="quick-start-copy">
             <strong>Choose your output frame</strong>
-            <span>{isFormatReady ? 'Frame preset set for short-form output.' : '9:16 gives a clean social cut.'}</span>
+            <span>{isFormatReady ? 'Frame preset set for short-form output.' : '9:16 is the social default for Shorts/TikTok style.'}</span>
           </div>
           <button className="tiny-icon-button" type="button" disabled={isFormatReady} onClick={onChooseFormat}>
             <ScissorsLineDashed size={12} />
@@ -90,10 +90,10 @@ export function QuickStartPanel({
         <li className={`quick-start-step ${hasCaptionWork ? 'done' : canAddCaptions ? 'active' : 'locked'}`}>
           <span className="quick-start-badge">3</span>
           <div className="quick-start-copy">
-            <strong>Make captions readable</strong>
+            <strong>Make captions readable (optional)</strong>
             <span>
               {hasCaptionWork
-                ? 'Captions are ready to move faster in muted feeds.'
+                ? 'Captions are active and tuned for muted social playback.'
                 : canAddCaptions
                   ? 'Add subtitle cues and pick a style for muted viewing.'
                   : 'Load source first to add cues.'}
@@ -109,7 +109,7 @@ export function QuickStartPanel({
           <span className="quick-start-badge">4</span>
           <div className="quick-start-copy">
             <strong>Export locally</strong>
-            <span>{canExport ? 'Ready to ship' : 'Unlock after source and range'}</span>
+            <span>{canExport ? 'Ready to ship your local MP4.' : 'Unlock after source and trim range are set.'}</span>
           </div>
           <button className="tiny-icon-button" type="button" disabled={!canExport} onClick={onExport}>
             <ArrowRight size={12} />

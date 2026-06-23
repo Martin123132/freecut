@@ -26,6 +26,7 @@ test('mission path updates as workflow unlocks', async ({ page }, testInfo) => {
   const miniMap = page.getByTestId('quick-start-mini');
   await expect(miniMap).toBeVisible();
   await expect(miniMap.getByRole('button', { name: 'Open map' })).toBeVisible();
+  await expect(miniMap.getByText('Next: import a local clip.')).toBeVisible();
 
   await page.keyboard.press('q');
   await expect(page.getByTestId('quick-start')).toBeVisible();
@@ -46,4 +47,12 @@ test('mission path updates as workflow unlocks', async ({ page }, testInfo) => {
   await page.keyboard.press('c');
   await expect(page.locator('.caption-card')).toHaveCount(1);
   await expect.poll(() => pathProgress()).toBeGreaterThan(2);
-});
+  await expect(page.getByTestId('quick-start')).toContainText('Captions are active and tuned for muted social playback.');
+
+  await page.evaluate(() => {
+    window.localStorage.setItem('freecut.quickstart.v1', '1');
+  });
+  await page.reload();
+  await expect(page.getByTestId('quick-start-mini')).toBeVisible();
+  await expect(page.getByTestId('quick-start-mini')).toContainText('Relink freecut-guided-smoke.webm to reopen this path.');
+});  

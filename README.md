@@ -11,7 +11,7 @@ Public demo page: https://martin123132.github.io/freecut/
 - Set trim start/end with a media-aware thumbnail timeline
 - Choose an export aspect ratio and reframe the crop focus
 - Add a text overlay
-- Add timed captions, caption style presets, or import SRT/VTT captions
+- Add timed captions with style presets (`Clean`, `Bold Box`, `Shorts Pop`) and import SRT/VTT captions
 - Autosave project settings locally and import/export `.freecut.json` project files
 - Restore a saved project with guided source-clip relink and preserved trim timing
 - Check export readiness with a guided ship preflight, render summary, and estimated output size

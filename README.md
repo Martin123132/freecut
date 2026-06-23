@@ -17,7 +17,7 @@ Public demo page: https://martin123132.github.io/freecut/
 - Check export readiness with a guided ship preflight, render summary, and estimated output size
 - Choose Quick, Balanced, or Master export quality
 - Export MP4 through FFmpeg with no watermark and keep recent exports available in the current session
-- Use keyboard shortcuts (`I`, `Space`, `C`, `F`, `R`, `E`, `S`, `←/→`) while editing and `?` / `Shift` + `K` to open Mission Control.
+- Use keyboard shortcuts (`I`, `Space`, `C`, `F`, `R`, `E`, `S`, `Q`, `←/→`) while editing and `?` / `Shift` + `K` for Mission Control. The guided mission map keeps you on the shortest route to a local MP4.
 
 ## Development
 

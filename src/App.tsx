@@ -106,10 +106,6 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (file) setShowQuickStart(false);
-  }, [file]);
-
-  useEffect(() => {
     return () => {
       if (previewUrl) URL.revokeObjectURL(previewUrl);
     };
@@ -691,6 +687,15 @@ function App() {
     }
   };
 
+  const openQuickStart = () => {
+    setShowQuickStart(true);
+    try {
+      window.localStorage.removeItem(QUICKSTART_KEY);
+    } catch {
+      // localStorage is optional for this preference on this platform.
+    }
+  };
+
   const downloadExportFromHistory = (id: string) => {
     const item = exportHistory.find((exportItem) => exportItem.id === id);
     if (!item) return;
@@ -748,6 +753,12 @@ function App() {
         return;
       }
 
+      if (normalized === 'q') {
+        event.preventDefault();
+        openQuickStart();
+        return;
+      }
+
       if (normalized === 'c' && file) {
         event.preventDefault();
         addGuidedCaption();
@@ -794,7 +805,23 @@ function App() {
     return () => {
       window.removeEventListener('keydown', onKeyDown);
     };
-  }, [addGuidedCaption, canExport, chooseVerticalFormat, cancelExport, currentTime, duration, exportClip, exportState, file, playPause, preset.id, requestMedia, resetTrimToFull, seek]);
+  }, [
+    addGuidedCaption,
+    canExport,
+    chooseVerticalFormat,
+    cancelExport,
+    currentTime,
+    duration,
+    exportClip,
+    exportState,
+    file,
+    openQuickStart,
+    playPause,
+    preset.id,
+    requestMedia,
+    resetTrimToFull,
+    seek
+  ]);
 
   useEffect(() => {
     if (!showCommandPalette) return;
@@ -921,6 +948,11 @@ function App() {
       keyHint: 'Left/Right',
       label: 'Nudge trim preview',
       enabled: Boolean(file && duration)
+    },
+    {
+      keyHint: 'Q',
+      label: 'Show mission path',
+      enabled: true
     }
   ];
 
@@ -999,9 +1031,9 @@ function App() {
       {
         id: 'start',
         label: 'Project quick-start',
-        description: 'Review the first-step mission path',
+        description: 'Review the mission map and unlock the next path.',
         keyHint: 'Q',
-        onActivate: dismissQuickStart,
+        onActivate: openQuickStart,
         disabled: false
       }
     ];
@@ -1019,7 +1051,7 @@ function App() {
     projectMediaName,
     requestMedia,
     resetTrimToFull,
-    dismissQuickStart,
+    openQuickStart,
     duration
   ]);
 
@@ -1139,9 +1171,10 @@ function App() {
           onRequestMedia={requestMedia}
         >
           <ShortcutHintStrip items={shortcutHints} />
-          {showQuickStart && !file ? (
+          {showQuickStart ? (
             <QuickStartPanel
               canAddCaptions={Boolean(file)}
+              hasCaptionWork={hasCaptionWork}
               canExport={canExport}
               fileNeedsImport={Boolean(!file)}
               isFormatReady={preset.id === 'vertical'}

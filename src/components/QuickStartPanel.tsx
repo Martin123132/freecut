@@ -5,6 +5,7 @@ type QuickStartPanelProps = {
   isFormatReady: boolean;
   canAddCaptions: boolean;
   canExport: boolean;
+  hasCaptionWork: boolean;
   projectMediaName: string | null;
   onDismiss: () => void;
   onImport: () => void;
@@ -18,6 +19,7 @@ export function QuickStartPanel({
   isFormatReady,
   canAddCaptions,
   canExport,
+  hasCaptionWork,
   projectMediaName,
   onDismiss,
   onImport,
@@ -25,20 +27,39 @@ export function QuickStartPanel({
   onAddCaption,
   onExport
 }: QuickStartPanelProps) {
+  const stepsDone = [!fileNeedsImport, isFormatReady, hasCaptionWork, canExport].filter(Boolean).length;
+
   return (
-    <section className="quick-start" aria-label="Quick start map">
+    <section className="quick-start" aria-label="Quick start map" data-testid="quick-start">
       <div className="quick-start-heading">
         <div>
           <span>Guided path</span>
-          <strong>First clip, fast</strong>
+          <strong>
+            Mission map {stepsDone}
+            <span>/{4}</span>
+          </strong>
         </div>
-        <button className="quick-start-dismiss" type="button" onClick={onDismiss} title="Dismiss this guide">
-          Got it
+        <button className="quick-start-dismiss" type="button" onClick={onDismiss} title="Hide this guide">
+          Hide map
         </button>
+      </div>
+      <div
+        className="quick-start-progress"
+        role="progressbar"
+        aria-label="Mission progress"
+        aria-valuemin={0}
+        aria-valuemax={4}
+        aria-valuenow={stepsDone}
+      >
+        <span>Progress</span>
+        <div className="quick-start-progress-track">
+          <i style={{ width: `${Math.round((stepsDone / 4) * 100)}%` }} />
+        </div>
+        <small>{Math.round((stepsDone / 4) * 100)}%</small>
       </div>
 
       <ol className="quick-start-steps">
-        <li>
+        <li className={`quick-start-step ${!fileNeedsImport ? 'done' : 'active'}`}>
           <span className="quick-start-badge">1</span>
           <div className="quick-start-copy">
             <strong>Start with one source</strong>
@@ -50,7 +71,7 @@ export function QuickStartPanel({
           </button>
         </li>
 
-        <li>
+        <li className={`quick-start-step ${isFormatReady ? 'done' : fileNeedsImport ? 'locked' : 'active'}`}>
           <span className="quick-start-badge">2</span>
           <div className="quick-start-copy">
             <strong>Choose your output frame</strong>
@@ -62,11 +83,17 @@ export function QuickStartPanel({
           </button>
         </li>
 
-        <li>
+        <li className={`quick-start-step ${hasCaptionWork ? 'done' : canAddCaptions ? 'active' : 'locked'}`}>
           <span className="quick-start-badge">3</span>
           <div className="quick-start-copy">
             <strong>Make captions readable</strong>
-            <span>{canAddCaptions ? 'Add subtitle cues and pick a style for muted viewing.' : 'Load source first to add cues.'}</span>
+            <span>
+              {hasCaptionWork
+                ? 'Captions are ready to move faster in muted feeds.'
+                : canAddCaptions
+                  ? 'Add subtitle cues and pick a style for muted viewing.'
+                  : 'Load source first to add cues.'}
+            </span>
           </div>
           <button className="tiny-icon-button" type="button" onClick={onAddCaption} disabled={!canAddCaptions}>
             <Sparkles size={12} />
@@ -74,7 +101,7 @@ export function QuickStartPanel({
           </button>
         </li>
 
-        <li>
+        <li className={`quick-start-step ${canExport ? 'done' : canAddCaptions ? 'active' : 'locked'}`}>
           <span className="quick-start-badge">4</span>
           <div className="quick-start-copy">
             <strong>Export locally</strong>

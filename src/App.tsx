@@ -930,34 +930,34 @@ function App() {
   };
 
   const shortcutHints = [
-    { keyHint: 'I', label: 'Import clip', enabled: true },
+    { keyHint: 'I', label: 'Import your source', enabled: true },
     {
       keyHint: 'Space',
-      label: file ? (isPlaying ? 'Pause' : 'Play') : 'Play (load clip)',
+      label: file ? (isPlaying ? 'Pause preview' : 'Play preview') : 'Play preview (load clip first)',
       enabled: Boolean(file && duration),
       disabledReason: file ? undefined : 'Load a clip first'
     },
     {
       keyHint: 'C',
-      label: 'Add caption',
+      label: 'Add caption cue',
       enabled: Boolean(file),
       disabledReason: file ? undefined : 'Load a clip first'
     },
     {
       keyHint: 'F',
-      label: '9:16 frame',
+      label: 'Set 9:16 frame',
       enabled: preset.id !== 'vertical',
-      disabledReason: 'Frame already set'
+      disabledReason: 'Vertical frame already set'
     },
     {
       keyHint: 'R',
-      label: 'Reset trim',
+      label: 'Fill timeline',
       enabled: Boolean(file && duration && !canExport),
       disabledReason: canExport ? 'Range already full/ready' : file ? 'Range trims loaded' : 'Load a clip first'
     },
     {
       keyHint: 'E',
-      label: exportState === 'exporting' ? 'Cancel export' : 'Export',
+      label: exportState === 'exporting' ? 'Cancel render' : 'Export MP4',
       enabled: exportState === 'exporting' || canExport
     },
     {
@@ -967,12 +967,12 @@ function App() {
     },
     {
       keyHint: 'Left/Right',
-      label: 'Nudge trim preview',
+      label: 'Nudge playhead',
       enabled: Boolean(file && duration)
     },
     {
       keyHint: 'Q',
-      label: 'Show mission path',
+      label: 'Open mission map',
       enabled: true
     }
   ];
@@ -1012,7 +1012,7 @@ function App() {
       {
         id: 'frame',
         label: 'Set 9:16 frame',
-        description: canFrame ? 'Align to the social cut size' : 'Already in vertical frame',
+        description: canFrame ? 'Align your canvas for short-form delivery' : 'Already tuned for short-form',
         keyHint: 'F',
         onActivate: chooseVerticalFormat,
         disabled: !canFrame
@@ -1020,7 +1020,7 @@ function App() {
       {
         id: 'trim',
         label: 'Reset trim',
-        description: canResetTrim ? 'Cover the full clip' : 'Trim is already full-length',
+        description: canResetTrim ? 'Cover the full clip length for a starting point' : 'Trim is already full-length',
         keyHint: 'R',
         onActivate: resetTrimToFull,
         disabled: !canResetTrim,
@@ -1029,7 +1029,7 @@ function App() {
       {
         id: 'export',
         label: exportState === 'exporting' ? 'Cancel export' : 'Start export',
-        description: canExportAction ? 'Run or stop render to MP4' : 'Finish setup and load a valid range',
+        description: canExportAction ? 'Run or stop render to local MP4' : 'Finish setup and load a valid range',
         keyHint: 'E',
         onActivate: () => {
           if (exportState === 'exporting') {
@@ -1051,8 +1051,8 @@ function App() {
       },
       {
         id: 'start',
-        label: 'Project quick-start',
-        description: 'Review the mission map and unlock the next path.',
+        label: 'Open mission map',
+        description: 'Review the mission map and lock onto your next move.',
         keyHint: 'Q',
         onActivate: openQuickStart,
         disabled: false
@@ -1081,10 +1081,10 @@ function App() {
       id: 'import',
       title: needsMediaRelink ? 'Reload source clip' : 'Bring in a clip',
       detail: file
-        ? 'Clip loaded. You are on the board.'
+        ? `Source "${file?.name}" loaded. Start refining your route.`
         : projectMediaName
           ? `Waiting for ${projectMediaName}.`
-          : 'Start with one video file from this machine.',
+          : 'Load one local clip to start your first run.',
       actionLabel: file ? 'Loaded' : needsMediaRelink ? 'Relink' : 'Import',
       status: file ? 'done' : 'active',
       onAction: requestMedia
@@ -1092,7 +1092,7 @@ function App() {
     {
       id: 'shape',
       title: 'Choose the frame',
-      detail: preset.id === 'vertical' ? 'Vertical export is armed for short-form.' : 'Pick the canvas that matches the final post.',
+      detail: preset.id === 'vertical' ? 'Vertical export is armed and tuned for short-form.' : 'Pick the final canvas shape before moving forward.',
       actionLabel: preset.id === 'vertical' ? 'Set' : '9:16',
       status: preset.id === 'vertical' ? 'done' : 'ready',
       onAction: chooseVerticalFormat
@@ -1100,10 +1100,15 @@ function App() {
     {
       id: 'captions',
       title: 'Make it readable',
-      detail: captions.length ? `${captions.length} caption cue${captions.length === 1 ? '' : 's'} ready.` : 'Draft captions before or after loading a clip.',
-      actionLabel: captions.length ? 'Add more' : 'Add cue',
-      status: hasCaptionWork ? 'done' : 'ready',
-      onAction: addGuidedCaption
+      detail: hasCaptionWork
+        ? `${captions.length} caption cue${captions.length === 1 ? '' : 's'} ready to improve muted viewing.`
+        : file
+          ? 'Optional: add cues and choose a style for muted playback.'
+          : 'Import a clip to enable captioning.',
+      actionLabel: hasCaptionWork ? 'Add more' : 'Add cue',
+      status: hasCaptionWork ? 'done' : file ? 'ready' : 'locked',
+      actionDisabled: !file,
+      onAction: file ? addGuidedCaption : requestMedia
     },
     {
       id: 'export',

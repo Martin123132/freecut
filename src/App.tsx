@@ -1106,6 +1106,7 @@ function App() {
           ? 'Optional: add cues and choose a style for muted playback.'
           : 'Import a clip to enable captioning.',
       actionLabel: hasCaptionWork ? 'Add more' : 'Add cue',
+      optional: true,
       status: hasCaptionWork ? 'done' : file ? 'ready' : 'locked',
       actionDisabled: !file,
       onAction: file ? addGuidedCaption : requestMedia

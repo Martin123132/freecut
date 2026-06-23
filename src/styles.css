@@ -767,6 +767,17 @@ button {
   color: var(--faint);
 }
 
+.shortcut-strip-text {
+  display: grid;
+  gap: 1px;
+}
+
+.shortcut-strip-text small {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.1;
+}
+
 .media-name {
   color: var(--text);
   font-size: 13px;
@@ -977,6 +988,46 @@ button {
   font-size: 11px;
   font-weight: 650;
   line-height: 1.28;
+}
+
+.workflow-step-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.step-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 16px;
+  padding: 0 7px;
+  border-radius: 8px;
+  font-size: 9px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.step-pill-next {
+  color: var(--accent-ink);
+  background: var(--accent);
+}
+
+.step-pill-ready {
+  color: #a7ff9b;
+  background: rgba(142, 224, 95, 0.28);
+}
+
+.step-pill-optional {
+  color: #b9b8ff;
+  background: rgba(138, 132, 255, 0.2);
+}
+
+.step-pill-locked {
+  color: var(--faint);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .workflow-action {

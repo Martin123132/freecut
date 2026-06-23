@@ -15,9 +15,12 @@ export function ShortcutHintStrip({ items }: ShortcutHintStripProps) {
         {items.map((item) => (
           <li className="shortcut-strip-item" key={item.keyHint}>
             <kbd>{item.keyHint}</kbd>
-            <span title={item.disabledReason} className={item.enabled ? 'enabled' : 'disabled'}>
-              {item.label}
-            </span>
+            <div className="shortcut-strip-text">
+              <span title={item.disabledReason} className={item.enabled ? 'enabled' : 'disabled'}>
+                {item.label}
+              </span>
+              {!item.enabled && item.disabledReason ? <small>{item.disabledReason}</small> : null}
+            </div>
           </li>
         ))}
       </ul>

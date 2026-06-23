@@ -6,6 +6,7 @@ export type WorkflowStep = {
   detail: string;
   actionLabel: string;
   actionDisabled?: boolean;
+  optional?: boolean;
   status: 'active' | 'done' | 'ready' | 'locked';
   onAction: () => void;
 };
@@ -36,9 +37,20 @@ export function WorkflowGuide({ steps }: WorkflowGuideProps) {
             </div>
             <div className="workflow-copy">
               <strong>{step.title}</strong>
+              <div className="workflow-step-meta">
+                {step.status === 'active' ? <span className="step-pill step-pill-next">Next</span> : null}
+                {step.status === 'ready' && !step.optional ? <span className="step-pill step-pill-ready">Ready</span> : null}
+                {step.optional ? <span className="step-pill step-pill-optional">Optional</span> : null}
+                {step.status === 'locked' ? <span className="step-pill step-pill-locked">Locked</span> : null}
+              </div>
               <span>{step.detail}</span>
             </div>
-            <button className="workflow-action" type="button" disabled={step.status === 'locked' || step.actionDisabled} onClick={step.onAction}>
+            <button
+              className="workflow-action"
+              type="button"
+              disabled={step.status === 'locked' || step.actionDisabled}
+              onClick={step.onAction}
+            >
               <Play size={12} fill="currentColor" />
               {step.actionLabel}
             </button>

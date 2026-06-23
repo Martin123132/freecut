@@ -1,29 +1,37 @@
 import { Download, HardDrive, RotateCcw, Save, ShieldCheck, X } from 'lucide-react';
 import { type KeyboardEvent, useEffect, useRef } from 'react';
+import { SessionExport } from '../lib/exportHistory';
 import { bytesToSize } from '../lib/format';
 
 type SettingsPanelProps = {
   apiDataRoot: string;
   exportLabel: string;
-  latestExportSize: number | null;
+  exportHistory: SessionExport[];
   mediaName: string | null;
   presetLabel: string;
   projectStatus: string;
   onClose: () => void;
-  onDownloadLatest: () => void;
+  onDownloadExport: (id: string) => void;
   onResetProject: () => void;
   onSaveProject: () => void;
 };
 
+const exportTimeFormatter = new Intl.DateTimeFormat(undefined, {
+  day: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+  month: 'short'
+});
+
 export function SettingsPanel({
   apiDataRoot,
   exportLabel,
-  latestExportSize,
+  exportHistory,
   mediaName,
   presetLabel,
   projectStatus,
   onClose,
-  onDownloadLatest,
+  onDownloadExport,
   onResetProject,
   onSaveProject
 }: SettingsPanelProps) {
@@ -121,6 +129,33 @@ export function SettingsPanel({
             <p className="settings-path">{apiDataRoot || 'Local FreeCut API'}</p>
           </section>
 
+          <section className="settings-section">
+            <div className="settings-section-title">
+              <Download size={15} />
+              <span>Export history</span>
+            </div>
+            {exportHistory.length ? (
+              <div className="export-history-list" data-testid="export-history-list">
+                {exportHistory.map((item) => (
+                  <div className="export-history-item" key={item.id}>
+                    <div className="export-history-copy">
+                      <strong>{item.filename}</strong>
+                      <span>
+                        {bytesToSize(item.size)} - {item.profileLabel} - {item.presetLabel} - {item.durationLabel}
+                      </span>
+                      <small>{exportTimeFormatter.format(item.createdAt)}</small>
+                    </div>
+                    <button type="button" aria-label={`Download ${item.filename}`} title={`Download ${item.filename}`} onClick={() => onDownloadExport(item.id)}>
+                      <Download size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="settings-empty">No exports yet</p>
+            )}
+          </section>
+
           <div className="settings-actions">
             <button type="button" onClick={onSaveProject}>
               <Save size={14} />
@@ -129,10 +164,6 @@ export function SettingsPanel({
             <button type="button" onClick={onResetProject}>
               <RotateCcw size={14} />
               Reset
-            </button>
-            <button type="button" disabled={!latestExportSize} onClick={onDownloadLatest}>
-              <Download size={14} />
-              {latestExportSize ? `Export ${bytesToSize(latestExportSize)}` : 'No export'}
             </button>
           </div>
         </div>

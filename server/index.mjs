@@ -68,6 +68,8 @@ const captionStyles = {
 };
 
 function assertDDrive(targetPath) {
+  if (process.platform !== 'win32') return;
+
   const root = path.parse(path.resolve(targetPath)).root.toUpperCase();
   if (root !== 'D:\\') {
     throw new Error(`FreeCut refuses to write outside D: (${targetPath})`);

@@ -85,6 +85,17 @@ test('export job progress reaches ready state', async ({ page }, testInfo) => {
     });
   });
 
+  await page.route('**/api/health', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      status: 200,
+      body: JSON.stringify({
+        dataRoot: 'FreeCut smoke API',
+        ok: true
+      })
+    });
+  });
+
   await importSmokeClip(page, testInfo);
   await page.locator('.preset', { hasText: '9:16' }).click();
   await page.getByRole('button', { name: 'Add caption' }).click();
@@ -93,11 +104,19 @@ test('export job progress reaches ready state', async ({ page }, testInfo) => {
   await setRangeValue(page, 'Focus Y', '35');
   await expect(page.locator('video')).toHaveCSS('object-position', '80% 35%');
   await expect(page.locator('.stage-caption-text')).toHaveClass(/caption-style-shorts-pop/);
+  await expect(page.getByTestId('export-readiness')).toContainText('1080 x 1920');
+  await expect(page.getByTestId('export-readiness')).toContainText('Shorts Pop');
+  await expect(page.getByTestId('export-readiness')).toContainText(/~\d/);
 
   await page.getByTestId('next-move').click();
   await expect(page.getByTestId('export-status')).toContainText(/Queued export|Rendering MP4|Uploading source clip/);
   await expect(page.getByTestId('export-status')).toContainText('Export ready');
   await expect(page.getByRole('button', { name: 'Download again' })).toBeVisible();
+  await page.getByRole('button', { name: 'Project settings' }).click();
+  await expect(page.getByTestId('export-history-list')).toContainText('Balanced');
+  await expect(page.getByTestId('export-history-list')).toContainText('9:16');
+  await expect(page.getByTestId('export-history-list')).toContainText('17 B');
+  await expect(page.getByRole('button', { name: /Download freecut-/ })).toBeVisible();
   expect(exportBody).toMatch(/name="cropX"[\s\S]*80/);
   expect(exportBody).toMatch(/name="cropY"[\s\S]*35/);
   expect(exportBody).toMatch(/name="captionStyleId"[\s\S]*shorts-pop/);

@@ -31,4 +31,4 @@ jobs:
         run: npm run build
 
       - name: Import and export smoke
-        run: npx playwright test tests/project-schema.spec.ts tests/freecut-import-transition.spec.ts tests/freecut-export-job.spec.ts
+        run: npx playwright test tests/project-schema.spec.ts tests/freecut-import-transition.spec.ts tests/freecut-export-job.spec.ts tests/freecut-export-output.spec.ts

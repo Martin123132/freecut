@@ -10,6 +10,8 @@ import { PreflightItem } from './components/ExportPreflight';
 import { SettingsPanel } from './components/SettingsPanel';
 import { CaptionCue, createCaptionCue, normalizeCaptions } from './lib/captions';
 import { CaptionStyle, captionStyleFromId, defaultCaptionStyle } from './lib/captionStyles';
+import { buildExportReadiness } from './lib/exportEstimate';
+import { SessionExport } from './lib/exportHistory';
 import { ExportProfile, defaultExportProfile, exportProfileFromId } from './lib/exportProfiles';
 import { bytesToSize, clamp, formatTime } from './lib/format';
 import {
@@ -25,12 +27,6 @@ import {
 import { AspectPreset, aspectPresets } from './lib/presets';
 
 type ExportState = 'idle' | 'exporting' | 'done' | 'error';
-type LatestExport = {
-  filename: string;
-  projectKey: string;
-  size: number;
-  url: string;
-};
 type ExportJobStatus = {
   error?: string;
   id: string;
@@ -74,7 +70,7 @@ function App() {
   const [exportState, setExportState] = useState<ExportState>('idle');
   const [exportMessage, setExportMessage] = useState('');
   const [exportProgress, setExportProgress] = useState(0);
-  const [latestExport, setLatestExport] = useState<LatestExport | null>(null);
+  const [exportHistory, setExportHistory] = useState<SessionExport[]>([]);
   const [apiHealth, setApiHealth] = useState<ApiHealth | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [projectStatus, setProjectStatus] = useState('Autosave ready');
@@ -91,6 +87,7 @@ function App() {
   const exportInFlightRef = useRef(false);
   const exportAbortRef = useRef<AbortController | null>(null);
   const exportJobIdRef = useRef<string | null>(null);
+  const exportHistoryRef = useRef<SessionExport[]>([]);
 
   useEffect(() => {
     return () => {
@@ -99,10 +96,14 @@ function App() {
   }, [previewUrl]);
 
   useEffect(() => {
+    exportHistoryRef.current = exportHistory;
+  }, [exportHistory]);
+
+  useEffect(() => {
     return () => {
-      if (latestExport) URL.revokeObjectURL(latestExport.url);
+      exportHistoryRef.current.forEach((item) => URL.revokeObjectURL(item.url));
     };
-  }, [latestExport]);
+  }, []);
 
   useEffect(() => {
     const desktopQuery = window.matchMedia('(min-width: 981px)');
@@ -158,8 +159,25 @@ function App() {
     () => captions.filter((caption) => currentTime >= caption.start && currentTime <= caption.end),
     [captions, currentTime]
   );
-  const hasCaptionWork = captions.length > 0 || (Boolean(overlayText.trim()) && overlayText.trim() !== defaultOverlayText);
+  const hasCustomOverlayText = Boolean(overlayText.trim()) && overlayText.trim() !== defaultOverlayText;
+  const hasCaptionWork = captions.length > 0 || hasCustomOverlayText;
   const needsMediaRelink = Boolean(projectMediaName && !file);
+  const exportDuration = canExport ? Math.max(0, trimEnd - trimStart) : 0;
+  const exportReadiness = useMemo(
+    () =>
+      buildExportReadiness({
+        captionCount: captions.length,
+        captionStyle,
+        cropX,
+        cropY,
+        durationSeconds: exportDuration,
+        hasOverlayText: hasCustomOverlayText,
+        preset,
+        profile: exportProfile,
+        sourceLoaded: Boolean(file)
+      }),
+    [captions.length, captionStyle, cropX, cropY, exportDuration, exportProfile, file, hasCustomOverlayText, preset]
+  );
   const exportProjectKey = useMemo(
     () =>
       JSON.stringify({
@@ -179,6 +197,7 @@ function App() {
       }),
     [captions, captionStyle.id, cropX, cropY, duration, exportProfile.id, file, overlaySize, overlayText, overlayX, overlayY, preset.id, projectMediaName, trimEnd, trimStart]
   );
+  const latestExport = exportHistory[0] ?? null;
   const latestExportIsCurrent = Boolean(latestExport && latestExport.projectKey === exportProjectKey);
   useEffect(() => {
     if (!projectHydratedRef.current) return;
@@ -202,7 +221,7 @@ function App() {
     const pendingRange = pendingProjectRangeRef.current;
 
     autosaveArmedRef.current = true;
-    clearLatestExport();
+    clearExportHistory();
     if (previewUrl) URL.revokeObjectURL(previewUrl);
 
     setFile(nextFile);
@@ -396,7 +415,7 @@ function App() {
     const shouldWaitForMedia = Boolean(snapshot.mediaName && !mediaMatchesLoadedFile);
 
     autosaveArmedRef.current = false;
-    clearLatestExport();
+    clearExportHistory();
     if (mediaConflictsLoadedFile) {
       if (previewUrl) URL.revokeObjectURL(previewUrl);
       setFile(null);
@@ -485,14 +504,14 @@ function App() {
     setExportState('idle');
     setExportProgress(0);
     setExportMessage('Project reset');
-    clearLatestExport();
+    clearExportHistory();
     setProjectStatus('Reset');
   };
 
-  const clearLatestExport = () => {
-    setLatestExport((current) => {
-      if (current) URL.revokeObjectURL(current.url);
-      return null;
+  const clearExportHistory = () => {
+    setExportHistory((current) => {
+      current.forEach((item) => URL.revokeObjectURL(item.url));
+      return [];
     });
   };
 
@@ -509,7 +528,10 @@ function App() {
     if (!file || !canExport || exportInFlightRef.current) return;
 
     const abortController = new AbortController();
-    clearLatestExport();
+    const startedDurationLabel = formatTime(trimEnd - trimStart);
+    const startedPresetLabel = preset.label;
+    const startedProfileLabel = exportProfile.label;
+    const startedProjectKey = exportProjectKey;
     exportInFlightRef.current = true;
     exportAbortRef.current = abortController;
     exportJobIdRef.current = null;
@@ -562,14 +584,28 @@ function App() {
       }
 
       const blob = await downloadResponse.blob();
-      const filename = `freecut-${Date.now()}.mp4`;
+      const createdAt = Date.now();
+      const filename = `freecut-${createdAt}.mp4`;
       const url = URL.createObjectURL(blob);
       downloadUrl(url, filename);
-      setLatestExport({
-        filename,
-        projectKey: exportProjectKey,
-        size: blob.size,
-        url
+      setExportHistory((current) => {
+        const nextExport: SessionExport = {
+          createdAt,
+          durationLabel: startedDurationLabel,
+          filename,
+          id: startedJob.id,
+          presetLabel: startedPresetLabel,
+          profileLabel: startedProfileLabel,
+          projectKey: startedProjectKey,
+          size: blob.size,
+          url
+        };
+        const next = [nextExport, ...current].slice(0, 5);
+        const retainedUrls = new Set(next.map((item) => item.url));
+        current.forEach((item) => {
+          if (!retainedUrls.has(item.url)) URL.revokeObjectURL(item.url);
+        });
+        return next;
       });
       setExportState('done');
       setExportProgress(100);
@@ -626,14 +662,20 @@ function App() {
     setExportMessage('Canceling export');
   };
 
+  const downloadExportFromHistory = (id: string) => {
+    const item = exportHistory.find((exportItem) => exportItem.id === id);
+    if (!item) return;
+
+    downloadUrl(item.url, item.filename);
+    setExportMessage(item.projectKey === exportProjectKey ? 'Export downloaded' : 'Previous export downloaded');
+  };
+
   const downloadLatestExport = () => {
     if (!latestExport) return;
-    downloadUrl(latestExport.url, latestExport.filename);
-    setExportMessage(latestExportIsCurrent ? 'Export downloaded' : 'Previous export downloaded');
+    downloadExportFromHistory(latestExport.id);
   };
 
   const requestMedia = () => mediaInputRef.current?.click();
-  const hasCustomOverlayText = Boolean(overlayText.trim()) && overlayText.trim() !== defaultOverlayText;
   const preflightItems: PreflightItem[] = [
     {
       id: 'source',
@@ -856,6 +898,7 @@ function App() {
         <Inspector
           preset={preset}
           exportProfile={exportProfile}
+          exportReadiness={exportReadiness}
           captionStyle={captionStyle}
           captions={captions}
           currentTime={currentTime}
@@ -961,12 +1004,12 @@ function App() {
         <SettingsPanel
           apiDataRoot={apiHealth?.dataRoot ?? ''}
           exportLabel={exportProfile.label}
-          latestExportSize={latestExport?.size ?? null}
+          exportHistory={exportHistory}
           mediaName={file?.name ?? projectMediaName}
           presetLabel={preset.label}
           projectStatus={projectStatus}
           onClose={closeSettings}
-          onDownloadLatest={downloadLatestExport}
+          onDownloadExport={downloadExportFromHistory}
           onResetProject={resetProject}
           onSaveProject={saveProjectFile}
         />

@@ -1,16 +1,19 @@
 import { AlignCenter, Crosshair, Crop, Type } from 'lucide-react';
 import { CaptionCue } from '../lib/captions';
 import { CaptionStyle } from '../lib/captionStyles';
+import { ExportReadinessSummary } from '../lib/exportEstimate';
 import { ExportProfile } from '../lib/exportProfiles';
 import { AspectPreset, aspectPresets } from '../lib/presets';
 import { CaptionsPanel } from './CaptionsPanel';
 import { ExportPreflight, PreflightItem } from './ExportPreflight';
+import { ExportReadinessPanel } from './ExportReadinessPanel';
 import { OutputPanel } from './OutputPanel';
 
 type InspectorProps = {
   preset: AspectPreset;
   exportProfile: ExportProfile;
   captionStyle: CaptionStyle;
+  exportReadiness: ExportReadinessSummary;
   preflightItems: PreflightItem[];
   preflightPrimaryLabel: string;
   preflightPrimaryDisabled: boolean;
@@ -43,6 +46,7 @@ export function Inspector({
   preset,
   exportProfile,
   captionStyle,
+  exportReadiness,
   preflightItems,
   preflightPrimaryLabel,
   preflightPrimaryDisabled,
@@ -85,6 +89,8 @@ export function Inspector({
       />
 
       <OutputPanel profile={exportProfile} onProfileChange={onExportProfileChange} />
+
+      <ExportReadinessPanel summary={exportReadiness} />
 
       <section className="control-group">
         <div className="control-title">

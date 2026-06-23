@@ -319,9 +319,7 @@ button {
 
 .quick-start-mini {
   margin-top: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  display: grid;
   gap: 10px;
   min-height: 39px;
   padding: 10px 12px;
@@ -331,28 +329,142 @@ button {
   border-radius: var(--radius);
 }
 
-.quick-start-mini-copy {
+.mission-rail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.mission-rail-copy {
   display: grid;
   gap: 2px;
   min-width: 0;
 }
 
-.quick-start-mini span {
+.mission-rail-copy-kicker {
   display: inline-flex;
   align-items: baseline;
   gap: 6px;
-  color: var(--text);
-  font-size: 12px;
+  color: var(--muted);
+  font-size: 11px;
   font-weight: 900;
+  text-transform: uppercase;
 }
 
-.quick-start-mini strong {
+.mission-rail-copy strong {
+  display: block;
+  color: var(--accent);
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.mission-rail-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.mission-rail-step {
+  position: relative;
+  display: grid;
+  gap: 5px;
+  grid-template-columns: 20px auto minmax(0, 1fr) auto;
+  align-items: center;
+  min-width: 0;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: rgba(10, 10, 10, 0.16);
+}
+
+.mission-rail-step.done {
+  border-color: rgba(142, 224, 95, 0.38);
+}
+
+.mission-rail-step.active {
+  border-color: rgba(142, 224, 95, 0.62);
+  background: rgba(142, 224, 95, 0.08);
+}
+
+.mission-rail-step.ready {
+  border-color: rgba(230, 185, 76, 0.5);
+}
+
+.mission-rail-step.locked {
+  opacity: 0.58;
+}
+
+.mission-rail-status-icon {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  color: var(--text);
+}
+
+.mission-rail-step.done .mission-rail-status-icon {
   color: var(--accent);
 }
 
-.quick-start-mini small {
+.mission-rail-step.active .mission-rail-status-icon {
+  color: #e1ea86;
+}
+
+.mission-rail-step.ready .mission-rail-status-icon,
+.mission-rail-step.locked .mission-rail-status-icon {
   color: var(--muted);
+}
+
+.mission-rail-index {
+  color: var(--faint);
   font-size: 11px;
+  font-weight: 900;
+}
+
+.mission-rail-text {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.mission-rail-text strong {
+  color: var(--text);
+  font-size: 11px;
+  line-height: 1.1;
+}
+
+.mission-rail-text small {
+  color: var(--faint);
+  font-size: 10px;
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mission-rail-action {
+  justify-self: end;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #1e1d1a;
+  color: var(--text);
+  font-size: 10px;
+  font-weight: 900;
+  padding: 0 9px;
+  min-height: 22px;
+  cursor: pointer;
+}
+
+.mission-rail-action:hover:not(:disabled) {
+  border-color: #7cb34b;
+}
+
+.mission-rail-action:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
 }
 
 .quick-start-mini-action {

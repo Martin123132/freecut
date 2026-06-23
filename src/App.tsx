@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { MapPinned } from 'lucide-react';
 import { Inspector } from './components/Inspector';
 import { MediaPanel } from './components/MediaPanel';
 import { Stage } from './components/Stage';
 import { Timeline } from './components/Timeline';
 import { TopBar } from './components/TopBar';
 import { WorkflowGuide, WorkflowStep } from './components/WorkflowGuide';
+import { MissionRail, MissionRailStep } from './components/MissionRail';
 import { ProjectPanel } from './components/ProjectPanel';
 import { PreflightItem } from './components/ExportPreflight';
 import { SettingsPanel } from './components/SettingsPanel';
@@ -200,6 +200,7 @@ function App() {
 
     return 'Mission ready — export is local.';
   }, [canExport, file, hasCaptionWork, needsMediaRelink, preset.id, projectMediaName]);
+
   const exportReadiness = useMemo(
     () =>
       buildExportReadiness({
@@ -731,6 +732,80 @@ function App() {
   };
 
   const requestMedia = () => mediaInputRef.current?.click();
+
+  const missionRailSteps = useMemo<MissionRailStep[]>(() => {
+    return [
+      {
+        id: 'source',
+        label: 'Source',
+        status: needsMediaRelink || !file ? 'active' : 'done',
+        description: needsMediaRelink
+          ? `Relink ${projectMediaName}`
+          : file
+            ? 'Local source loaded'
+            : 'Import a local clip',
+        actionLabel: needsMediaRelink ? 'Relink' : file ? 'Replace' : 'Import',
+        onAction: requestMedia
+      },
+      {
+        id: 'frame',
+        label: 'Frame',
+        status:
+          preset.id === 'vertical'
+            ? 'done'
+            : file
+              ? 'ready'
+              : needsMediaRelink
+                ? 'locked'
+                : 'locked',
+        description: preset.id === 'vertical' ? '9:16 set for short-form' : 'Choose social canvas width',
+        actionLabel: preset.id === 'vertical' ? 'Set' : 'Set 9:16',
+        onAction: chooseVerticalFormat,
+        disabled: !file || needsMediaRelink
+      },
+      {
+        id: 'captions',
+        label: 'Captions',
+        status: hasCaptionWork ? 'done' : file ? 'ready' : needsMediaRelink ? 'locked' : 'locked',
+        description: hasCaptionWork
+          ? `${captions.length} cue${captions.length === 1 ? '' : 's'} ready`
+          : file
+            ? 'Optional: add captions + style'
+            : 'Add subtitles for muted playback',
+        actionLabel: hasCaptionWork ? 'Tweak' : 'Add cue',
+        onAction: file ? addGuidedCaption : requestMedia,
+        disabled: !file || needsMediaRelink
+      },
+      {
+        id: 'export',
+        label: 'Export',
+        status: canExport ? 'done' : file ? 'active' : 'locked',
+        description: canExport
+          ? `${Math.round(exportDuration)}s export path ready`
+          : file
+            ? 'Set a valid trim range to ship'
+            : 'Unlock after loading source',
+        actionLabel: canExport ? 'Export MP4' : file ? 'Full range' : 'Import',
+        onAction: canExport ? exportClip : file && duration ? resetTrimToFull : requestMedia
+      }
+    ];
+  }, [
+    addGuidedCaption,
+    canExport,
+    captions.length,
+    chooseVerticalFormat,
+    duration,
+    exportClip,
+    file,
+    hasCaptionWork,
+    needsMediaRelink,
+    preset.id,
+    projectMediaName,
+    requestMedia,
+    resetTrimToFull,
+    exportDuration
+  ]);
+
   useEffect(() => {
     const isTypingTarget = (target: EventTarget | null) => {
       if (!(target instanceof HTMLElement)) return false;
@@ -1223,16 +1298,7 @@ function App() {
               progressTotal={4}
             />
           ) : (
-            <section className="quick-start-mini" aria-label="Mission path summary" data-testid="quick-start-mini">
-              <div className="quick-start-mini-copy">
-                <span>Mission map <strong>{quickStartProgress}/4</strong></span>
-                <small>{quickStartHint}</small>
-              </div>
-              <button className="quick-start-mini-action" type="button" onClick={openQuickStart}>
-                <MapPinned size={12} />
-                Open map
-              </button>
-            </section>
+            <MissionRail steps={missionRailSteps} hint={`Mission map ${quickStartHint}`} onOpenMap={openQuickStart} />
           )}
           <ProjectPanel
             mediaName={file?.name ?? projectMediaName}

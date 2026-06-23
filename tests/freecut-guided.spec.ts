@@ -56,3 +56,35 @@ test('mission path updates as workflow unlocks', async ({ page }, testInfo) => {
   await expect(page.getByTestId('quick-start-mini')).toBeVisible();
   await expect(page.getByTestId('quick-start-mini')).toContainText('Relink freecut-guided-smoke.webm to reopen this path.');
 });  
+
+test('mission rail stays visible and ready when map is minimized', async ({ page }, testInfo) => {
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await page.evaluate(() => {
+    window.localStorage.setItem('freecut.quickstart.v1', '1');
+    window.localStorage.removeItem('freecut.project.v1');
+  });
+  await page.reload();
+
+  const miniRail = page.getByTestId('quick-start-mini');
+  await expect(miniRail).toBeVisible();
+  await expect(miniRail.locator('.mission-rail-action')).toHaveCount(4);
+  await expect(miniRail.getByTestId('mission-step-source-action')).toHaveText('Import');
+  await expect(miniRail.getByTestId('mission-step-frame-action')).toBeDisabled();
+  await expect(miniRail.getByTestId('mission-step-captions-action')).toBeDisabled();
+
+  const smokeVideoPath = testInfo.outputPath('freecut-guided-rail.webm');
+  await createSmokeVideo(smokeVideoPath);
+  await page.getByTestId('media-import-input').setInputFiles(smokeVideoPath);
+  await page.waitForFunction(() => {
+    const video = document.querySelector('video');
+    return Boolean(video && Number.isFinite(video.duration) && video.duration > 0 && video.readyState >= 1);
+  });
+
+  await expect(miniRail.getByTestId('mission-step-source-action')).toHaveText('Replace');
+  await expect(miniRail.getByTestId('mission-step-frame-action')).toBeEnabled();
+  await expect(miniRail.getByTestId('mission-step-captions-action')).toBeEnabled();
+  await expect(miniRail.getByTestId('mission-step-export-action')).toContainText('Export MP4');
+
+  await page.keyboard.press('f');
+  await expect(page.getByTestId('mission-step-frame')).toHaveClass(/done/);
+});

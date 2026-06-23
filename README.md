@@ -6,22 +6,25 @@ Public demo page: https://martin123132.github.io/freecut/
 
 ## MVP
 
-- Import one video locally
-- Preview, play, and seek
+- Import one local clip
+- Preview, scrub, and review playback timing
 - Set trim start/end with a media-aware thumbnail timeline
-- Choose an export aspect ratio and reframe the crop focus
+- Choose short-form framing and reframe the crop focus
 - Add a text overlay
-- Add timed captions with style presets (`Clean`, `Bold Box`, `Shorts Pop`) and import SRT/VTT captions
+- Add timed captions with style presets (`Clean`, `Bold Box`, `Shorts Pop`) and import SRT/VTT
 - Autosave project settings locally and import/export `.freecut.json` project files
 - Restore a saved project with guided source-clip relink and preserved trim timing
 - Check export readiness with a guided ship preflight, render summary, and estimated output size
 - Choose Quick, Balanced, or Master export quality
-- Export MP4 through FFmpeg with no watermark and keep recent exports available in the current session
-- Use keyboard shortcuts (`I`, `Space`, `C`, `F`, `R`, `E`, `S`, `Q`, `←/→`) while editing and `?` / `Shift` + `K` for Mission Control. The guided mission map keeps you on the shortest route to a local MP4.
+- Export MP4 through FFmpeg with no watermark and keep recent exports available in-session
+- Use keyboard shortcuts (`I`, `Space`, `C`, `F`, `R`, `E`, `S`, `Q`, `Left/Right`) while editing and `?` / `Shift` + `K` for Mission Control.
+- Mission flow is intentionally guided: Import → Frame → (Optional) Captions → Trim → Export.
 
 ## Development
 
-Keep project files, npm, Playwright, and temporary caches on the D drive when developing on this machine. For a fresh public clone, use a FreeCut-named folder such as `D:\codex-projects\freecut`.
+Keep project files, npm, Playwright, and temporary caches on the D drive when developing on this machine.
+
+Clone example on D:
 
 ```powershell
 git clone https://github.com/Martin123132/freecut.git D:\codex-projects\freecut

@@ -309,6 +309,121 @@ button {
   white-space: nowrap;
 }
 
+.quick-start {
+  margin-top: 14px;
+  padding: 12px;
+  background: rgba(34, 45, 66, 0.8);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.quick-start-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.quick-start-heading div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.quick-start-heading span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.quick-start-heading strong {
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.quick-start-dismiss {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 27px;
+  padding: 0 10px;
+  color: var(--accent-ink);
+  background: var(--accent);
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.quick-start-steps {
+  list-style: none;
+  display: grid;
+  margin: 10px 0 0;
+  padding: 0;
+  gap: 8px;
+}
+
+.quick-start-steps li {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.quick-start-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: #141313;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  color: var(--text);
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.quick-start-copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.quick-start-copy strong {
+  color: var(--text);
+  font-size: 12px;
+}
+
+.quick-start-copy span {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.quick-start .tiny-icon-button {
+  width: auto;
+  height: 28px;
+  padding: 0 10px;
+  gap: 6px;
+  color: var(--accent-ink);
+  background: var(--accent);
+}
+
+.quick-start .tiny-icon-button:disabled {
+  color: var(--faint);
+  background: var(--panel-strong);
+  border-color: var(--line);
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.quick-start .tiny-icon-button:hover:not(:disabled) {
+  border-color: var(--accent-ink);
+}
+
 .media-name {
   color: var(--text);
   font-size: 13px;

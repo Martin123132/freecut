@@ -8,6 +8,7 @@ import { WorkflowGuide, WorkflowStep } from './components/WorkflowGuide';
 import { ProjectPanel } from './components/ProjectPanel';
 import { PreflightItem } from './components/ExportPreflight';
 import { SettingsPanel } from './components/SettingsPanel';
+import { QuickStartPanel } from './components/QuickStartPanel';
 import { CaptionCue, createCaptionCue, normalizeCaptions } from './lib/captions';
 import { CaptionStyle, captionStyleFromId, defaultCaptionStyle } from './lib/captionStyles';
 import { buildExportReadiness } from './lib/exportEstimate';
@@ -48,6 +49,7 @@ type NextMove = {
   title: string;
 };
 const defaultOverlayText = 'MAKE IT FREE';
+const QUICKSTART_KEY = 'freecut.quickstart.v1';
 
 function App() {
   const [file, setFile] = useState<File | null>(null);
@@ -73,6 +75,7 @@ function App() {
   const [exportHistory, setExportHistory] = useState<SessionExport[]>([]);
   const [apiHealth, setApiHealth] = useState<ApiHealth | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [showQuickStart, setShowQuickStart] = useState(false);
   const [projectStatus, setProjectStatus] = useState('Autosave ready');
   const [projectMediaName, setProjectMediaName] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -88,6 +91,20 @@ function App() {
   const exportAbortRef = useRef<AbortController | null>(null);
   const exportJobIdRef = useRef<string | null>(null);
   const exportHistoryRef = useRef<SessionExport[]>([]);
+
+  useEffect(() => {
+    try {
+      const dismissed = window.localStorage.getItem(QUICKSTART_KEY);
+      if (!dismissed) setShowQuickStart(true);
+    } catch {
+      // Best effort: keep guide visible if localStorage is unavailable.
+      setShowQuickStart(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (file) setShowQuickStart(false);
+  }, [file]);
 
   useEffect(() => {
     return () => {
@@ -662,6 +679,15 @@ function App() {
     setExportMessage('Canceling export');
   };
 
+  const dismissQuickStart = () => {
+    setShowQuickStart(false);
+    try {
+      window.localStorage.setItem(QUICKSTART_KEY, '1');
+    } catch {
+      // localStorage is optional for this preference on this platform.
+    }
+  };
+
   const downloadExportFromHistory = (id: string) => {
     const item = exportHistory.find((exportItem) => exportItem.id === id);
     if (!item) return;
@@ -860,6 +886,20 @@ function App() {
           onSelectFile={handleSelectFile}
           onRequestMedia={requestMedia}
         >
+          {showQuickStart && !file ? (
+            <QuickStartPanel
+              canAddCaptions={Boolean(file)}
+              canExport={canExport}
+              fileNeedsImport={Boolean(!file)}
+              isFormatReady={preset.id === 'vertical'}
+              onAddCaption={addGuidedCaption}
+              onChooseFormat={chooseVerticalFormat}
+              onDismiss={dismissQuickStart}
+              onExport={exportClip}
+              onImport={requestMedia}
+              projectMediaName={projectMediaName}
+            />
+          ) : null}
           <ProjectPanel
             mediaName={file?.name ?? projectMediaName}
             status={projectStatus}

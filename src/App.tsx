@@ -988,39 +988,39 @@ function App() {
       {
         id: 'import',
         label: 'Import clip',
-        description: projectMediaName ? `Relink ${projectMediaName}` : 'Choose a local video source',
+        description: projectMediaName ? `Relink ${projectMediaName} to continue` : 'Start your route with a local source',
         keyHint: 'I',
         onActivate: requestMedia,
         disabled: false
       },
       {
-        id: 'playpause',
-        label: isPlaying ? 'Pause playback' : 'Play playback',
-        description: canPlayPause ? 'Preview the current section' : 'Load a clip first',
-        keyHint: 'Space',
-        onActivate: playPause,
-        disabled: !canPlayPause
-      },
-      {
-        id: 'caption',
-        label: 'Add a caption cue',
-        description: canAddCaption ? 'Insert a new cue at the current time' : 'Load a clip first',
-        keyHint: 'C',
-        onActivate: addGuidedCaption,
-        disabled: !canAddCaption
-      },
-      {
         id: 'frame',
         label: 'Set 9:16 frame',
-        description: canFrame ? 'Align your canvas for short-form delivery' : 'Already tuned for short-form',
+        description: canFrame ? 'Choose this first for short-form output' : 'Already tuned for short-form',
         keyHint: 'F',
         onActivate: chooseVerticalFormat,
         disabled: !canFrame
       },
       {
+        id: 'caption',
+        label: 'Add a caption cue',
+        description: canAddCaption
+          ? 'Optional: add a subtitle cue and style for muted playback'
+          : 'Load a clip to enable captioning',
+        keyHint: 'C',
+        onActivate: addGuidedCaption,
+        disabled: !canAddCaption
+      },
+      {
         id: 'trim',
         label: 'Reset trim',
-        description: canResetTrim ? 'Cover the full clip length for a starting point' : 'Trim is already full-length',
+        description: canResetTrim
+          ? 'Set a safe export range baseline'
+          : file
+            ? canExport
+              ? 'Export is ready'
+              : 'Trim already spans full range'
+            : 'Load a clip before trimming',
         keyHint: 'R',
         onActivate: resetTrimToFull,
         disabled: !canResetTrim,
@@ -1028,8 +1028,8 @@ function App() {
       },
       {
         id: 'export',
-        label: exportState === 'exporting' ? 'Cancel export' : 'Start export',
-        description: canExportAction ? 'Run or stop render to local MP4' : 'Finish setup and load a valid range',
+        label: exportState === 'exporting' ? 'Cancel render' : 'Export MP4',
+        description: canExportAction ? 'Run local render to MP4, or stop it if needed' : 'Need a source and valid trim range',
         keyHint: 'E',
         onActivate: () => {
           if (exportState === 'exporting') {
@@ -1040,6 +1040,14 @@ function App() {
           if (canExport) void exportClip();
         },
         disabled: !canExportAction
+      },
+      {
+        id: 'playpause',
+        label: isPlaying ? 'Pause playback' : 'Play playback',
+        description: canPlayPause ? 'Review current scene timing' : 'Load a clip first',
+        keyHint: 'Space',
+        onActivate: playPause,
+        disabled: !canPlayPause
       },
       {
         id: 'settings',

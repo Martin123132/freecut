@@ -32,6 +32,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\dev-env.ps1 npm.cm
 
 The API listens on `127.0.0.1:5174`; Vite listens on `127.0.0.1:5173`.
 
+FreeCut uses `ffmpeg-static` by default. On Linux machines where that binary lacks caption filters such as `drawtext`, install system FFmpeg and set `FREECUT_FFMPEG_PATH=ffmpeg` before running the API or smoke tests.
+
 ## QA
 
 The native OS file-picker window is not reliably automatable. The import-transition smoke verifies the same app path immediately behind that picker by setting the real file input to a generated WebM clip, waiting for browser media metadata, and checking that the FreeCut dock reaches export-ready state. The export smoke also starts the local API and verifies a real FFmpeg MP4 output for requested dimensions and duration.

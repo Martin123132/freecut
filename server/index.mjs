@@ -6,7 +6,7 @@ import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import cors from 'cors';
 import express from 'express';
-import ffmpegPath from 'ffmpeg-static';
+import ffmpegStaticPath from 'ffmpeg-static';
 import multer from 'multer';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -15,6 +15,7 @@ const dataRoot = process.env.FREECUT_DATA_DIR || path.join(projectRoot, 'data');
 const uploadDir = path.join(dataRoot, 'uploads');
 const exportDir = path.join(dataRoot, 'exports');
 const port = Number(process.env.PORT || 5174);
+const ffmpegPath = process.env.FREECUT_FFMPEG_PATH || ffmpegStaticPath;
 const exportJobs = new Map();
 const exportProfiles = {
   quick: {

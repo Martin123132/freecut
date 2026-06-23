@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { MapPinned } from 'lucide-react';
 import { Inspector } from './components/Inspector';
 import { MediaPanel } from './components/MediaPanel';
 import { Stage } from './components/Stage';
@@ -177,6 +178,7 @@ function App() {
   );
   const hasCustomOverlayText = Boolean(overlayText.trim()) && overlayText.trim() !== defaultOverlayText;
   const hasCaptionWork = captions.length > 0 || hasCustomOverlayText;
+  const quickStartProgress = [Boolean(file), preset.id === 'vertical', hasCaptionWork, canExport].filter(Boolean).length;
   const needsMediaRelink = Boolean(projectMediaName && !file);
   const exportDuration = canExport ? Math.max(0, trimEnd - trimStart) : 0;
   const exportReadiness = useMemo(
@@ -1184,8 +1186,20 @@ function App() {
               onExport={exportClip}
               onImport={requestMedia}
               projectMediaName={projectMediaName}
+              progress={quickStartProgress}
+              progressTotal={4}
             />
-          ) : null}
+          ) : (
+            <section className="quick-start-mini" aria-label="Mission path summary" data-testid="quick-start-mini">
+              <span>
+                Mission map <strong>{quickStartProgress}/4</strong>
+              </span>
+              <button className="quick-start-mini-action" type="button" onClick={openQuickStart}>
+                <MapPinned size={12} />
+                Open map
+              </button>
+            </section>
+          )}
           <ProjectPanel
             mediaName={file?.name ?? projectMediaName}
             status={projectStatus}

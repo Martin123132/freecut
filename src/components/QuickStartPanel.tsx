@@ -6,6 +6,8 @@ type QuickStartPanelProps = {
   canAddCaptions: boolean;
   canExport: boolean;
   hasCaptionWork: boolean;
+  progress: number;
+  progressTotal: number;
   projectMediaName: string | null;
   onDismiss: () => void;
   onImport: () => void;
@@ -20,6 +22,8 @@ export function QuickStartPanel({
   canAddCaptions,
   canExport,
   hasCaptionWork,
+  progress,
+  progressTotal,
   projectMediaName,
   onDismiss,
   onImport,
@@ -27,7 +31,7 @@ export function QuickStartPanel({
   onAddCaption,
   onExport
 }: QuickStartPanelProps) {
-  const stepsDone = [!fileNeedsImport, isFormatReady, hasCaptionWork, canExport].filter(Boolean).length;
+  const stepsDone = progress ?? [!fileNeedsImport, isFormatReady, hasCaptionWork, canExport].filter(Boolean).length;
 
   return (
     <section className="quick-start" aria-label="Quick start map" data-testid="quick-start">
@@ -36,7 +40,7 @@ export function QuickStartPanel({
           <span>Guided path</span>
           <strong>
             Mission map {stepsDone}
-            <span>/{4}</span>
+            <span>/{progressTotal}</span>
           </strong>
         </div>
         <button className="quick-start-dismiss" type="button" onClick={onDismiss} title="Hide this guide">
@@ -48,14 +52,14 @@ export function QuickStartPanel({
         role="progressbar"
         aria-label="Mission progress"
         aria-valuemin={0}
-        aria-valuemax={4}
+        aria-valuemax={progressTotal}
         aria-valuenow={stepsDone}
       >
         <span>Progress</span>
         <div className="quick-start-progress-track">
-          <i style={{ width: `${Math.round((stepsDone / 4) * 100)}%` }} />
+          <i style={{ width: `${Math.round((stepsDone / progressTotal) * 100)}%` }} />
         </div>
-        <small>{Math.round((stepsDone / 4) * 100)}%</small>
+        <small>{Math.round((stepsDone / progressTotal) * 100)}%</small>
       </div>
 
       <ol className="quick-start-steps">

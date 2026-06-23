@@ -23,6 +23,9 @@ test('mission path updates as workflow unlocks', async ({ page }, testInfo) => {
   });
   await page.reload();
   await expect(page.getByTestId('quick-start')).not.toBeVisible();
+  const miniMap = page.getByTestId('quick-start-mini');
+  await expect(miniMap).toBeVisible();
+  await expect(miniMap.getByRole('button', { name: 'Open map' })).toBeVisible();
 
   await page.keyboard.press('q');
   await expect(page.getByTestId('quick-start')).toBeVisible();

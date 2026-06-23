@@ -317,6 +317,52 @@ button {
   border-radius: var(--radius);
 }
 
+.quick-start-mini {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 39px;
+  padding: 10px 12px;
+  color: var(--muted);
+  background: rgba(34, 45, 66, 0.8);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.quick-start-mini span {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.quick-start-mini strong {
+  color: var(--accent);
+}
+
+.quick-start-mini-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 27px;
+  padding: 0 10px;
+  color: var(--accent-ink);
+  background: var(--accent);
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.quick-start-mini-action:hover {
+  transform: translateY(-1px);
+}
+
 .quick-start-heading {
   display: flex;
   align-items: flex-start;

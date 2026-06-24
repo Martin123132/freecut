@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
+import { sanitizeExportReceipts } from '../src/lib/exportHistory';
 import { createProjectSnapshot, parseProjectText, serializeProject } from '../src/lib/project';
+import { createRecentProjectEntry, maxRecentProjects, sanitizeRecentProjects } from '../src/lib/recentProjects';
 
 test('older project files without reframe or caption style fields migrate safely', () => {
   const snapshot = parseProjectText(
@@ -77,4 +79,89 @@ test('new project files preserve export, reframe, captions, and caption style se
   expect(parsed.overlayY).toBe(68);
   expect(parsed.overlaySize).toBe(5.5);
   expect(parsed.captions.map((caption) => caption.text)).toEqual(['No subscription gate', 'Export locally']);
+});
+
+test('recent project storage sanitizes, dedupes, and caps browser state', () => {
+  const first = createProjectSnapshot({
+    mediaName: 'first.webm',
+    presetId: 'vertical',
+    exportProfileId: 'balanced',
+    captionStyleId: 'clean',
+    trimStart: 0,
+    trimEnd: 5,
+    overlayText: 'FIRST',
+    overlayX: 50,
+    overlayY: 72,
+    overlaySize: 4.5,
+    cropX: 50,
+    cropY: 50,
+    captions: []
+  });
+  const duplicate = createProjectSnapshot({
+    ...first,
+    trimEnd: 7
+  });
+  const rest = Array.from({ length: maxRecentProjects + 2 }, (_, index) =>
+    createRecentProjectEntry(
+      createProjectSnapshot({
+        mediaName: `clip-${index}.webm`,
+        presetId: index % 2 ? 'square' : 'wide',
+        exportProfileId: 'quick',
+        captionStyleId: 'bold-box',
+        trimStart: 0,
+        trimEnd: index + 1,
+        overlayText: '',
+        overlayX: 50,
+        overlayY: 72,
+        overlaySize: 4.5,
+        cropX: 50,
+        cropY: 50,
+        captions: []
+      })
+    )
+  );
+
+  const projects = sanitizeRecentProjects({
+    version: 1,
+    items: [createRecentProjectEntry(first), createRecentProjectEntry(duplicate), { broken: true }, ...rest]
+  });
+
+  expect(projects).toHaveLength(maxRecentProjects);
+  expect(projects[0].snapshot.mediaName).toBe('first.webm');
+  expect(projects.filter((project) => project.snapshot.mediaName === 'first.webm')).toHaveLength(1);
+  expect(projects.every((project) => project.snapshot.version === 1)).toBe(true);
+});
+
+test('export receipt storage restores metadata without stale download URLs', () => {
+  const receipts = sanitizeExportReceipts({
+    version: 1,
+    items: [
+      {
+        captionLabel: 'Shorts Pop',
+        createdAt: 1782264000000,
+        durationLabel: '0:05',
+        filename: 'freecut-1782264000000.mp4',
+        id: 'job-1',
+        presetLabel: '9:16',
+        profileLabel: 'Balanced',
+        projectKey: 'same-edit',
+        size: 1024,
+        url: 'blob:stale'
+      },
+      {
+        id: '',
+        filename: 'broken.mp4'
+      }
+    ]
+  });
+
+  expect(receipts).toHaveLength(1);
+  expect(receipts[0]).toMatchObject({
+    available: false,
+    captionLabel: 'Shorts Pop',
+    filename: 'freecut-1782264000000.mp4',
+    projectKey: 'same-edit',
+    size: 1024,
+    url: null
+  });
 });

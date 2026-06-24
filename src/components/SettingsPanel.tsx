@@ -1,6 +1,6 @@
 import { Download, HardDrive, RotateCcw, Save, ShieldCheck, X } from 'lucide-react';
 import { type KeyboardEvent, useEffect, useRef } from 'react';
-import { SessionExport } from '../lib/exportHistory';
+import type { SessionExport } from '../lib/exportHistory';
 import { bytesToSize } from '../lib/format';
 
 type SettingsPanelProps = {
@@ -145,8 +145,14 @@ export function SettingsPanel({
                       </span>
                       <small>{exportTimeFormatter.format(item.createdAt)}</small>
                     </div>
-                    <button type="button" aria-label={`Download ${item.filename}`} title={`Download ${item.filename}`} onClick={() => onDownloadExport(item.id)}>
-                      <Download size={14} />
+                    <button
+                      type="button"
+                      aria-label={item.available ? `Download ${item.filename}` : `${item.filename} download needs re-export`}
+                      title={item.available ? `Download ${item.filename}` : 'Re-export this cut to download again'}
+                      disabled={!item.available}
+                      onClick={() => onDownloadExport(item.id)}
+                    >
+                      {item.available ? <Download size={14} /> : 'Re-export'}
                     </button>
                   </div>
                 ))}

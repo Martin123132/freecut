@@ -96,7 +96,8 @@ function startApiServer({ dataDir, port, tempDir }: { dataDir: string; port: num
       TEMP: tempDir,
       TMP: tempDir
     },
-    stdio: ['ignore', 'pipe', 'pipe']
+    stdio: ['ignore', 'pipe', 'pipe'],
+    windowsHide: true
   });
   let logs = '';
 
@@ -114,7 +115,7 @@ function startApiServer({ dataDir, port, tempDir }: { dataDir: string; port: num
 }
 
 async function waitForApi(baseUrl: string, api: ApiServer) {
-  for (let attempt = 0; attempt < 80; attempt += 1) {
+  for (let attempt = 0; attempt < 160; attempt += 1) {
     if (api.child.exitCode !== null) {
       throw new Error(`FreeCut API exited before it became ready.\n${api.logs()}`);
     }

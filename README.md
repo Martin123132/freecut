@@ -13,12 +13,12 @@ Public demo page: https://martin123132.github.io/freecut/
 - Add a text overlay
 - Add timed captions with clickable timeline markers, duplicate/split actions, style presets (`Clean`, `Bold Box`, `Shorts Pop`), and SRT/VTT import
 - Autosave project settings locally and import/export `.freecut.json` project files
-- Restore a saved project with guided source-clip relink and preserved trim timing
+- Restore a saved project or recent local route with guided source-clip relink and preserved trim timing
 - Restore session checkpoints after exploratory frame, quality, and caption-style changes
 - Undo and redo edit changes from the toolbar or keyboard
 - Check export readiness with a guided ship preflight, render summary, dock render plan, and estimated output size
 - Choose Quick, Balanced, or Master export quality
-- Export MP4 through the local FFmpeg worker with no watermark and keep recent exports available in-session
+- Export MP4 through the local FFmpeg worker with no watermark, session downloads, and reload-safe export receipts
 - Use keyboard shortcuts (`I`, `Space`, `C`, `F`, `R`, `E`, `S`, `U`, `Ctrl+Z`, `Ctrl+Y`, `Q`, `Left/Right`) while editing and `?` / `Shift` + `K` for Mission Control.
 - Mission flow is intentionally guided: Import -> Frame -> (Optional) Captions -> Trim -> Export.
 

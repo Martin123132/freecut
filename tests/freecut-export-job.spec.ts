@@ -122,6 +122,13 @@ test('export job progress reaches ready state', async ({ page }, testInfo) => {
   await expect(page.getByTestId('export-history-list')).toContainText('Shorts Pop');
   await expect(page.getByTestId('export-history-list')).toContainText('17 B');
   await expect(page.getByTestId('export-history-list').getByRole('button', { name: /Download freecut-/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Close settings' }).click();
+  await page.reload();
+  await expect(page.getByTestId('recent-projects')).toContainText('freecut-export-smoke.webm');
+  await expect(page.getByTestId('export-status')).toContainText('re-export to download');
+  await page.getByRole('button', { name: 'Project settings' }).click();
+  await expect(page.getByTestId('export-history-list')).toContainText('freecut-');
+  await expect(page.getByTestId('export-history-list').getByRole('button', { name: /download needs re-export/ })).toBeDisabled();
   expect(exportBody).toMatch(/name="cropX"[\s\S]*80/);
   expect(exportBody).toMatch(/name="cropY"[\s\S]*35/);
   expect(exportBody).toMatch(/name="captionStyleId"[\s\S]*shorts-pop/);

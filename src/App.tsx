@@ -6,7 +6,7 @@ import { Timeline } from './components/Timeline';
 import { TopBar } from './components/TopBar';
 import { WorkflowGuide, WorkflowStep } from './components/WorkflowGuide';
 import { MissionRail, MissionRailStep } from './components/MissionRail';
-import { ProjectPanel } from './components/ProjectPanel';
+import { ProjectPanel, type RecentProjectCard } from './components/ProjectPanel';
 import { PreflightItem } from './components/ExportPreflight';
 import { SettingsPanel } from './components/SettingsPanel';
 import { QuickStartPanel } from './components/QuickStartPanel';
@@ -17,7 +17,7 @@ import { CheckpointPanel, SessionCheckpoint } from './components/CheckpointPanel
 import { CaptionCue, createCaptionCue, normalizeCaptions } from './lib/captions';
 import { CaptionStyle, captionStyleFromId, defaultCaptionStyle } from './lib/captionStyles';
 import { buildExportReadiness } from './lib/exportEstimate';
-import { SessionExport } from './lib/exportHistory';
+import { readStoredExportReceipts, type SessionExport, writeStoredExportReceipts } from './lib/exportHistory';
 import { ExportProfile, defaultExportProfile, exportProfileFromId } from './lib/exportProfiles';
 import { bytesToSize, clamp, formatTime } from './lib/format';
 import {
@@ -31,6 +31,13 @@ import {
   writeStoredProject
 } from './lib/project';
 import { AspectPreset, aspectPresets } from './lib/presets';
+import {
+  projectRecentId,
+  readRecentProjects,
+  type RecentProjectEntry,
+  recentProjectDurationLabel,
+  writeRecentProject
+} from './lib/recentProjects';
 
 type ExportState = 'idle' | 'exporting' | 'done' | 'error';
 type ExportJobStatus = {
@@ -88,10 +95,21 @@ type NextMove = {
 const defaultOverlayText = 'MAKE IT FREE';
 const editHistoryLimit = 60;
 const QUICKSTART_KEY = 'freecut.quickstart.v1';
+const recentProjectTimeFormatter = new Intl.DateTimeFormat(undefined, {
+  day: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+  month: 'short'
+});
 
 const cloneCaptions = (items: CaptionCue[]) => items.map((caption) => ({ ...caption }));
 
 const editableSnapshotKey = (snapshot: EditableSnapshot) => JSON.stringify(snapshot);
+
+const formatRecentProjectSavedAt = (value: string) => {
+  const timestamp = Date.parse(value);
+  return Number.isFinite(timestamp) ? `Saved ${recentProjectTimeFormatter.format(timestamp)}` : 'Saved recently';
+};
 
 function App() {
   const [file, setFile] = useState<File | null>(null);
@@ -115,6 +133,7 @@ function App() {
   const [exportMessage, setExportMessage] = useState('');
   const [exportProgress, setExportProgress] = useState(0);
   const [exportHistory, setExportHistory] = useState<SessionExport[]>([]);
+  const [recentProjects, setRecentProjects] = useState<RecentProjectEntry[]>([]);
   const [apiHealth, setApiHealth] = useState<ApiHealth | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [showQuickStart, setShowQuickStart] = useState(false);
@@ -160,8 +179,15 @@ function App() {
 
   useEffect(() => {
     return () => {
-      exportHistoryRef.current.forEach((item) => URL.revokeObjectURL(item.url));
+      exportHistoryRef.current.forEach((item) => {
+        if (item.url) URL.revokeObjectURL(item.url);
+      });
     };
+  }, []);
+
+  useEffect(() => {
+    setExportHistory(readStoredExportReceipts());
+    setRecentProjects(readRecentProjects());
   }, []);
 
   useEffect(() => {
@@ -184,6 +210,7 @@ function App() {
     const savedProject = readStoredProject();
     if (savedProject) {
       applyProject(savedProject);
+      rememberProject(savedProject);
       setProjectStatus('Restored');
     }
 
@@ -378,6 +405,11 @@ function App() {
           ? 'Latest export matches this edit'
           : 'Timeline changed since last export'
         : 'Local FFmpeg worker - no cloud upload';
+
+  const rememberProject = (snapshot: ProjectSnapshot) => {
+    setRecentProjects(writeRecentProject(snapshot));
+  };
+
   useEffect(() => {
     if (!projectHydratedRef.current) return;
     if (skipInitialAutosaveRef.current) {
@@ -392,6 +424,7 @@ function App() {
 
     const snapshot = buildProjectSnapshot();
     writeStoredProject(snapshot);
+    rememberProject(snapshot);
     setProjectStatus('Autosaved');
   }, [captions, captionStyle, cropX, cropY, exportProfile, file, overlaySize, overlayText, overlayX, overlayY, preset, projectMediaName, trimEnd, trimStart]);
 
@@ -401,7 +434,6 @@ function App() {
 
     autosaveArmedRef.current = true;
     clearEditHistory();
-    clearExportHistory();
     setCheckpoint(null);
     if (previewUrl) URL.revokeObjectURL(previewUrl);
 
@@ -702,7 +734,6 @@ function App() {
 
     autosaveArmedRef.current = false;
     clearEditHistory();
-    clearExportHistory();
     setCheckpoint(null);
     if (mediaConflictsLoadedFile) {
       if (previewUrl) URL.revokeObjectURL(previewUrl);
@@ -740,6 +771,7 @@ function App() {
   const saveProjectFile = () => {
     const snapshot = buildProjectSnapshot();
     writeStoredProject(snapshot);
+    rememberProject(snapshot);
     setProjectStatus('Saved');
 
     const blob = new Blob([serializeProject(snapshot)], { type: 'application/json' });
@@ -762,6 +794,7 @@ function App() {
       const snapshot = parseProjectText(await projectFile.text());
       applyProject(snapshot);
       writeStoredProject(snapshot);
+      rememberProject(snapshot);
       setProjectStatus('Opened');
     } catch {
       setProjectStatus('Open failed');
@@ -794,15 +827,17 @@ function App() {
     setExportState('idle');
     setExportProgress(0);
     setExportMessage('Project reset');
-    clearExportHistory();
     setProjectStatus('Reset');
   };
 
-  const clearExportHistory = () => {
-    setExportHistory((current) => {
-      current.forEach((item) => URL.revokeObjectURL(item.url));
-      return [];
-    });
+  const restoreRecentProject = (id: string) => {
+    const recentProject = recentProjects.find((item) => item.id === id);
+    if (!recentProject) return;
+
+    applyProject(recentProject.snapshot);
+    writeStoredProject(recentProject.snapshot);
+    rememberProject(recentProject.snapshot);
+    setProjectStatus('Recent restored');
   };
 
   const downloadUrl = (url: string, filename: string) => {
@@ -881,6 +916,7 @@ function App() {
       downloadUrl(url, filename);
       setExportHistory((current) => {
         const nextExport: SessionExport = {
+          available: true,
           captionLabel: startedCaptionLabel,
           createdAt,
           durationLabel: startedDurationLabel,
@@ -893,9 +929,10 @@ function App() {
           url
         };
         const next = [nextExport, ...current].slice(0, 5);
-        const retainedUrls = new Set(next.map((item) => item.url));
+        writeStoredExportReceipts(next);
+        const retainedUrls = new Set(next.map((item) => item.url).filter(Boolean));
         current.forEach((item) => {
-          if (!retainedUrls.has(item.url)) URL.revokeObjectURL(item.url);
+          if (item.url && !retainedUrls.has(item.url)) URL.revokeObjectURL(item.url);
         });
         return next;
       });
@@ -974,7 +1011,10 @@ function App() {
 
   const downloadExportFromHistory = (id: string) => {
     const item = exportHistory.find((exportItem) => exportItem.id === id);
-    if (!item) return;
+    if (!item?.url || !item.available) {
+      setExportMessage('Re-export this cut to download again');
+      return;
+    }
 
     downloadUrl(item.url, item.filename);
     setExportMessage(item.projectKey === exportProjectKey ? 'Export downloaded' : 'Previous export downloaded');
@@ -1404,6 +1444,7 @@ function App() {
     const canExportAction = canExport || exportState === 'exporting';
     const canFrame = preset.id !== 'vertical';
     const canResetTrim = Boolean(file && duration && !canExport);
+    const latestRecentProject = file ? undefined : recentProjects[0];
 
     return [
       {
@@ -1414,6 +1455,17 @@ function App() {
         onActivate: requestMedia,
         disabled: false
       },
+      ...(latestRecentProject
+        ? [
+            {
+              id: 'resume',
+              label: `Resume ${latestRecentProject.snapshot.mediaName ?? 'recent cut'}`,
+              description: 'Restore the saved route, then relink the local source if needed',
+              onActivate: () => restoreRecentProject(latestRecentProject.id),
+              disabled: false
+            }
+          ]
+        : []),
       {
         id: 'frame',
         label: 'Set 9:16 frame',
@@ -1499,8 +1551,10 @@ function App() {
     playPause,
     preset.id,
     projectMediaName,
+    recentProjects,
     requestMedia,
     resetTrimToFull,
+    restoreRecentProject,
     openQuickStart,
     duration
   ]);
@@ -1673,6 +1727,19 @@ function App() {
                 reason: 'A source clip unlocks trimming, captions, and export.',
                 title: 'Bring in a clip'
               };
+  const currentRecentProjectId = projectRecentId(buildProjectSnapshot());
+  const recentProjectCards: RecentProjectCard[] = recentProjects.map((item) => {
+    const captionCount = item.snapshot.captions.length;
+    const captionLabel = captionCount ? `${captionCount} cue${captionCount === 1 ? '' : 's'}` : 'No cues';
+
+    return {
+      detail: `${presetFromProject(item.snapshot).label} - ${exportProfileFromId(item.snapshot.exportProfileId).label} - ${recentProjectDurationLabel(item.snapshot)} - ${captionLabel}`,
+      id: item.id,
+      isActive: item.id === currentRecentProjectId,
+      savedLabel: formatRecentProjectSavedAt(item.updatedAt),
+      title: item.snapshot.mediaName ?? 'Untitled cut'
+    };
+  });
 
   return (
     <div className="app-shell">
@@ -1725,10 +1792,12 @@ function App() {
           <ShortcutHintStrip items={shortcutHints} />
           <ProjectPanel
             mediaName={file?.name ?? projectMediaName}
+            recentProjects={recentProjectCards}
             status={projectStatus}
             inputRef={projectInputRef}
             onSaveProject={saveProjectFile}
             onOpenProject={openProjectFile}
+            onRestoreRecentProject={restoreRecentProject}
             onResetProject={resetProject}
           />
           <WorkflowGuide steps={workflowSteps} />
@@ -1845,8 +1914,8 @@ function App() {
             <span>
               {exportState === 'exporting'
                 ? `${exportMessage || `Rendering ${exportProfile.label} MP4`} - ${Math.round(exportProgress)}%`
-                : exportState === 'done' && latestExport
-                  ? `${latestExportIsCurrent ? 'Export ready' : 'Previous export'} - ${latestExport.filename} - ${bytesToSize(latestExport.size)}`
+                : latestExport
+                  ? `${latestExportIsCurrent ? (latestExport.available ? 'Export ready' : 'Export receipt') : 'Previous export'} - ${latestExport.filename} - ${bytesToSize(latestExport.size)}${latestExport.available ? '' : ' - re-export to download'}`
                   : exportMessage || 'Idle'}
             </span>
             {exportState === 'exporting' ? (
@@ -1862,7 +1931,7 @@ function App() {
               <button className="status-retry" type="button" onClick={() => void exportClip()}>
                 Retry
               </button>
-            ) : latestExport ? (
+            ) : latestExport?.available ? (
               <button className="status-download" type="button" aria-label={`Download ${latestExport.filename}`} title={`Download ${latestExport.filename}`} onClick={downloadLatestExport}>
                 Download MP4
               </button>

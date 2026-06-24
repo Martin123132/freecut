@@ -91,3 +91,39 @@ test('mission rail stays visible and ready when map is minimized', async ({ page
   await miniRail.getByTestId('mission-discovery').getByRole('button', { name: 'Set 9:16' }).click();
   await expect(page.getByTestId('mission-step-frame')).toHaveClass(/done/);
 });
+
+test('explore panel exposes optional moves without breaking the guided path', async ({ page }, testInfo) => {
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await page.evaluate(() => {
+    window.localStorage.setItem('freecut.quickstart.v1', '1');
+    window.localStorage.removeItem('freecut.project.v1');
+  });
+  await page.reload();
+
+  const explorePanel = page.getByTestId('explore-panel');
+  await expect(explorePanel).toBeVisible();
+  await expect(explorePanel.getByTestId('explore-square')).toBeDisabled();
+  await expect(explorePanel.getByTestId('explore-shorts-pop')).toBeDisabled();
+
+  await explorePanel.getByTestId('explore-master').click();
+  await expect(page.locator('.output-profile.active')).toContainText('Master');
+
+  const smokeVideoPath = testInfo.outputPath('freecut-explore-panel.webm');
+  await createSmokeVideo(smokeVideoPath);
+  await page.getByTestId('media-import-input').setInputFiles(smokeVideoPath);
+  await page.waitForFunction(() => {
+    const video = document.querySelector('video');
+    return Boolean(video && Number.isFinite(video.duration) && video.duration > 0 && video.readyState >= 1);
+  });
+
+  await expect(explorePanel.getByTestId('explore-square')).toBeEnabled();
+  await explorePanel.getByTestId('explore-square').click();
+  await expect(page.locator('.preset.active')).toContainText('1:1');
+  await expect(page.getByTestId('mission-step-frame')).toHaveClass(/ready/);
+
+  await expect(explorePanel.getByTestId('explore-shorts-pop')).toBeEnabled();
+  await explorePanel.getByTestId('explore-shorts-pop').click();
+  await expect(page.locator('.caption-card')).toHaveCount(1);
+  await expect(page.locator('.caption-style.active')).toContainText('Shorts Pop');
+  await expect(page.getByTestId('mission-step-captions')).toHaveClass(/done/);
+});

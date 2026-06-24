@@ -12,6 +12,7 @@ import { SettingsPanel } from './components/SettingsPanel';
 import { QuickStartPanel } from './components/QuickStartPanel';
 import { ShortcutHintStrip } from './components/ShortcutHintStrip';
 import { CommandAction, CommandPalette } from './components/CommandPalette';
+import { ExploreAction, ExplorePanel } from './components/ExplorePanel';
 import { CaptionCue, createCaptionCue, normalizeCaptions } from './lib/captions';
 import { CaptionStyle, captionStyleFromId, defaultCaptionStyle } from './lib/captionStyles';
 import { buildExportReadiness } from './lib/exportEstimate';
@@ -423,11 +424,25 @@ function App() {
     updatePreset(verticalPreset);
   };
 
+  const chooseSquareFormat = () => {
+    const squarePreset = aspectPresets.find((item) => item.id === 'square') ?? aspectPresets[0];
+    updatePreset(squarePreset);
+  };
+
+  const chooseMasterExportProfile = () => {
+    updateExportProfile(exportProfileFromId('master'));
+  };
+
   const addGuidedCaption = () => {
     autosaveArmedRef.current = true;
     const start = clamp(currentTime || trimStart, 0, duration || currentTime || 0);
     const end = duration ? Math.min(duration, Math.max(start + 0.1, start + 2)) : start + 2;
     setCaptions((items) => [...items, createCaptionCue(start, end, 'Say it clearly')]);
+  };
+
+  const chooseShortsPopCaption = () => {
+    updateCaptionStyle(captionStyleFromId('shorts-pop'));
+    if (file && captions.length === 0) addGuidedCaption();
   };
 
   const buildProjectSnapshot = () =>
@@ -1211,6 +1226,72 @@ function App() {
     duration
   ]);
 
+  const exploreActions = useMemo<ExploreAction[]>(() => {
+    const cropIsCentered = cropX === 50 && cropY === 50;
+    const squareIsActive = preset.id === 'square';
+    const shortsPopIsActive = captionStyle.id === 'shorts-pop' && captions.length > 0;
+    const masterIsActive = exportProfile.id === 'master';
+
+    return [
+      {
+        id: 'center',
+        icon: 'focus',
+        label: 'Center focus',
+        detail: cropIsCentered ? 'Already centered' : 'Snap focus to middle',
+        actionLabel: 'Center',
+        status: !file ? 'locked' : cropIsCentered ? 'done' : 'ready',
+        disabled: !file || cropIsCentered,
+        disabledReason: !file ? 'Load a clip first' : 'Focus already centered',
+        onAction: centerCrop
+      },
+      {
+        id: 'square',
+        icon: 'square',
+        label: 'Try square',
+        detail: squareIsActive ? '1:1 is active' : '1:1 social crop',
+        actionLabel: '1:1',
+        status: !file ? 'locked' : squareIsActive ? 'done' : 'ready',
+        disabled: !file || squareIsActive,
+        disabledReason: !file ? 'Load a clip first' : 'Square frame already active',
+        onAction: chooseSquareFormat
+      },
+      {
+        id: 'shorts-pop',
+        icon: 'caption',
+        label: 'Pop captions',
+        detail: shortsPopIsActive ? 'Shorts Pop active' : captions.length ? 'Use Shorts Pop' : 'Add bold cue',
+        actionLabel: captions.length ? 'Style' : 'Add',
+        status: !file ? 'locked' : shortsPopIsActive ? 'done' : 'ready',
+        disabled: !file || shortsPopIsActive,
+        disabledReason: !file ? 'Load a clip first' : 'Shorts Pop caption is active',
+        onAction: chooseShortsPopCaption
+      },
+      {
+        id: 'master',
+        icon: 'quality',
+        label: 'Master output',
+        detail: masterIsActive ? 'Highest quality' : 'Boost export quality',
+        actionLabel: 'Master',
+        status: masterIsActive ? 'done' : 'ready',
+        disabled: masterIsActive,
+        disabledReason: 'Master export is active',
+        onAction: chooseMasterExportProfile
+      }
+    ];
+  }, [
+    captionStyle.id,
+    captions.length,
+    centerCrop,
+    chooseMasterExportProfile,
+    chooseShortsPopCaption,
+    chooseSquareFormat,
+    cropX,
+    cropY,
+    exportProfile.id,
+    file,
+    preset.id
+  ]);
+
   const workflowSteps: WorkflowStep[] = [
     {
       id: 'import',
@@ -1332,7 +1413,6 @@ function App() {
           onSelectFile={handleSelectFile}
           onRequestMedia={requestMedia}
         >
-          <ShortcutHintStrip items={shortcutHints} />
           {showQuickStart ? (
             <QuickStartPanel
               canAddCaptions={Boolean(file)}
@@ -1357,6 +1437,8 @@ function App() {
               onOpenMap={openQuickStart}
             />
           )}
+          <ExplorePanel actions={exploreActions} />
+          <ShortcutHintStrip items={shortcutHints} />
           <ProjectPanel
             mediaName={file?.name ?? projectMediaName}
             status={projectStatus}

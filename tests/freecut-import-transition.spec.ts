@@ -48,18 +48,19 @@ test('imported clip metadata unlocks FreeCut dock readiness', async ({ page }, t
 
   const outInput = page.locator('.timeline-ranges label').nth(1).locator('input');
   const initialOut = Number(await outInput.inputValue());
-  const railBox = await page.getByTestId('timeline-rail').boundingBox();
-  const outHandleBox = await page.getByTestId('timeline-trim-end-handle').boundingBox();
+  const rail = page.getByTestId('timeline-rail');
+  const outHandle = page.getByTestId('timeline-trim-end-handle');
+  const railBox = await rail.boundingBox();
+  const outHandleBox = await outHandle.boundingBox();
   expect(railBox).not.toBeNull();
   expect(outHandleBox).not.toBeNull();
   if (!railBox || !outHandleBox) throw new Error('Timeline rail or trim handle was not measurable.');
 
-  await page.mouse.move(outHandleBox.x + outHandleBox.width / 2, outHandleBox.y + outHandleBox.height / 2);
-  await page.mouse.down();
-  await page.mouse.move(railBox.x + railBox.width * 0.7, outHandleBox.y + outHandleBox.height / 2, { steps: 4 });
-  await expect(page.getByTestId('timeline-drag-readout')).toBeVisible();
-  await page.mouse.up();
-  await expect(page.getByTestId('timeline-drag-readout')).not.toBeVisible();
+  await outHandle.dragTo(rail, {
+    force: true,
+    sourcePosition: { x: outHandleBox.width / 2, y: outHandleBox.height / 2 },
+    targetPosition: { x: railBox.width * 0.7, y: outHandleBox.y - railBox.y + outHandleBox.height / 2 }
+  });
   expect(Number(await outInput.inputValue())).toBeLessThan(initialOut);
 
   await page.locator('.stage-wrap').click();

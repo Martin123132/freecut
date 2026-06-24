@@ -17,11 +17,30 @@ test('keyboard shortcuts speed through the core path', async ({ page }, testInfo
   await importSmokeClip(page, testInfo);
 
   await expect(page.getByText('Quick controls')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Undo edit' })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Redo edit' })).toBeDisabled();
+
   await page.keyboard.press('c');
   await expect(page.locator('.caption-card')).toHaveCount(1);
+  await expect(page.getByRole('button', { name: 'Undo edit' })).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Redo edit' })).toBeDisabled();
+
+  await page.keyboard.press(process.platform === 'darwin' ? 'Meta+Z' : 'Control+Z');
+  await expect(page.locator('.caption-card')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Undo edit' })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Redo edit' })).toBeEnabled();
+
+  await page.keyboard.press(process.platform === 'darwin' ? 'Meta+Shift+Z' : 'Control+Y');
+  await expect(page.locator('.caption-card')).toHaveCount(1);
+  await expect(page.getByRole('button', { name: 'Undo edit' })).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Redo edit' })).toBeDisabled();
 
   await page.keyboard.press('f');
-  await expect(page.locator('.preset', { hasText: '9:16' })).toHaveClass(/active/);
+  await expect(page.getByTestId('preflight-row-frame')).toContainText('9:16');
+  await page.getByRole('button', { name: 'Undo edit' }).click();
+  await expect(page.getByTestId('preflight-row-frame')).toContainText('16:9');
+  await page.getByRole('button', { name: 'Redo edit' }).click();
+  await expect(page.getByTestId('preflight-row-frame')).toContainText('9:16');
 
   const timeBefore = await page.evaluate(() => {
     const video = document.querySelector('video');

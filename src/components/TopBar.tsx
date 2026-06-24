@@ -1,16 +1,20 @@
-import { Download, ScissorsLineDashed, Settings, X } from 'lucide-react';
+import { Download, Redo2, ScissorsLineDashed, Settings, Undo2, X } from 'lucide-react';
 import { type RefObject } from 'react';
 
 type TopBarProps = {
   canExport: boolean;
+  canRedo: boolean;
+  canUndo: boolean;
   exporting: boolean;
   onCancelExport: () => void;
   onExport: () => void;
+  onRedo: () => void;
   onSettings: () => void;
+  onUndo: () => void;
   settingsButtonRef: RefObject<HTMLButtonElement | null>;
 };
 
-export function TopBar({ canExport, exporting, onCancelExport, onExport, onSettings, settingsButtonRef }: TopBarProps) {
+export function TopBar({ canExport, canRedo, canUndo, exporting, onCancelExport, onExport, onRedo, onSettings, onUndo, settingsButtonRef }: TopBarProps) {
   return (
     <header className="topbar">
       <div className="brand">
@@ -23,6 +27,28 @@ export function TopBar({ canExport, exporting, onCancelExport, onExport, onSetti
         </div>
       </div>
       <div className="topbar-actions">
+        <div className="history-actions" aria-label="Edit history">
+          <button
+            className="icon-button"
+            type="button"
+            aria-label="Undo edit"
+            title="Undo edit (Ctrl+Z)"
+            disabled={!canUndo}
+            onClick={onUndo}
+          >
+            <Undo2 size={17} />
+          </button>
+          <button
+            className="icon-button"
+            type="button"
+            aria-label="Redo edit"
+            title="Redo edit (Ctrl+Y)"
+            disabled={!canRedo}
+            onClick={onRedo}
+          >
+            <Redo2 size={17} />
+          </button>
+        </div>
         <button
           ref={settingsButtonRef}
           className="icon-button"
@@ -41,7 +67,7 @@ export function TopBar({ canExport, exporting, onCancelExport, onExport, onSetti
           onClick={exporting ? onCancelExport : onExport}
         >
           {exporting ? <X size={17} /> : <Download size={17} />}
-          {exporting ? 'Cancel' : 'Export'}
+          <span className="primary-button-label">{exporting ? 'Cancel' : 'Export'}</span>
         </button>
       </div>
     </header>

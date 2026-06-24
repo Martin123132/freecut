@@ -116,6 +116,12 @@ button {
   gap: 10px;
 }
 
+.history-actions {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+
 .primary-button,
 .icon-button,
 .transport-play {
@@ -3028,6 +3034,35 @@ button {
 
   .brand-subtitle {
     display: none;
+  }
+
+  .topbar-actions {
+    gap: 6px;
+  }
+
+  .history-actions {
+    gap: 4px;
+  }
+
+  .topbar .icon-button {
+    width: 36px;
+    height: 36px;
+  }
+
+  .topbar .primary-button {
+    min-width: 38px;
+    width: 38px;
+    height: 36px;
+    padding: 0;
+  }
+
+  .topbar .primary-button-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
   }
 
   .workspace {

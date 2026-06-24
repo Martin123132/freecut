@@ -56,6 +56,27 @@ type CheckpointSnapshot = {
 type ActiveCheckpoint = SessionCheckpoint & {
   snapshot: CheckpointSnapshot;
 };
+type EditableSnapshot = {
+  captionStyleId: string;
+  captions: CaptionCue[];
+  cropX: number;
+  cropY: number;
+  exportProfileId: string;
+  overlaySize: number;
+  overlayText: string;
+  overlayX: number;
+  overlayY: number;
+  presetId: string;
+  trimEnd: number;
+  trimStart: number;
+};
+type EditHistoryState = {
+  redo: EditableSnapshot[];
+  undo: EditableSnapshot[];
+};
+type EditOptions = {
+  recordHistory?: boolean;
+};
 type NextMove = {
   action: () => void;
   disabled?: boolean;
@@ -65,7 +86,12 @@ type NextMove = {
   title: string;
 };
 const defaultOverlayText = 'MAKE IT FREE';
+const editHistoryLimit = 60;
 const QUICKSTART_KEY = 'freecut.quickstart.v1';
+
+const cloneCaptions = (items: CaptionCue[]) => items.map((caption) => ({ ...caption }));
+
+const editableSnapshotKey = (snapshot: EditableSnapshot) => JSON.stringify(snapshot);
 
 function App() {
   const [file, setFile] = useState<File | null>(null);
@@ -96,6 +122,7 @@ function App() {
   const [projectStatus, setProjectStatus] = useState('Autosave ready');
   const [projectMediaName, setProjectMediaName] = useState<string | null>(null);
   const [checkpoint, setCheckpoint] = useState<ActiveCheckpoint | null>(null);
+  const [editHistory, setEditHistory] = useState<EditHistoryState>({ redo: [], undo: [] });
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const settingsButtonRef = useRef<HTMLButtonElement | null>(null);
   const mediaInputRef = useRef<HTMLInputElement | null>(null);
@@ -186,6 +213,87 @@ function App() {
     window.setTimeout(() => settingsButtonRef.current?.focus(), 0);
   }, []);
 
+  const createEditableSnapshot = (): EditableSnapshot => ({
+    captionStyleId: captionStyle.id,
+    captions: cloneCaptions(captions),
+    cropX,
+    cropY,
+    exportProfileId: exportProfile.id,
+    overlaySize,
+    overlayText,
+    overlayX,
+    overlayY,
+    presetId: preset.id,
+    trimEnd,
+    trimStart
+  });
+
+  const applyEditableSnapshot = (snapshot: EditableSnapshot, status: string) => {
+    const restoredPreset = aspectPresets.find((item) => item.id === snapshot.presetId) ?? aspectPresets[0];
+    const nextTrimEnd = Math.max(snapshot.trimStart, snapshot.trimEnd);
+    const nextTime = clamp(currentTime, snapshot.trimStart, nextTrimEnd || snapshot.trimStart);
+
+    autosaveArmedRef.current = true;
+    setPreset(restoredPreset);
+    setExportProfile(exportProfileFromId(snapshot.exportProfileId));
+    setCaptionStyle(captionStyleFromId(snapshot.captionStyleId));
+    setTrimStart(snapshot.trimStart);
+    setTrimEnd(nextTrimEnd);
+    setOverlayText(snapshot.overlayText);
+    setOverlayX(snapshot.overlayX);
+    setOverlayY(snapshot.overlayY);
+    setOverlaySize(snapshot.overlaySize);
+    setCropX(snapshot.cropX);
+    setCropY(snapshot.cropY);
+    setCaptions(cloneCaptions(snapshot.captions));
+    setCheckpoint(null);
+    setCurrentTime(nextTime);
+    if (videoRef.current) videoRef.current.currentTime = nextTime;
+    setProjectStatus(status);
+  };
+
+  const clearEditHistory = () => {
+    setEditHistory({ redo: [], undo: [] });
+  };
+
+  const pushUndoSnapshot = () => {
+    const snapshot = createEditableSnapshot();
+    const snapshotKey = editableSnapshotKey(snapshot);
+
+    setEditHistory((current) => {
+      const latest = current.undo[current.undo.length - 1];
+      if (latest && editableSnapshotKey(latest) === snapshotKey) return { ...current, redo: [] };
+      return {
+        redo: [],
+        undo: [...current.undo, snapshot].slice(-editHistoryLimit)
+      };
+    });
+  };
+
+  const undoEdit = () => {
+    const previous = editHistory.undo[editHistory.undo.length - 1];
+    if (!previous) return;
+
+    const present = createEditableSnapshot();
+    setEditHistory({
+      redo: [present, ...editHistory.redo].slice(0, editHistoryLimit),
+      undo: editHistory.undo.slice(0, -1)
+    });
+    applyEditableSnapshot(previous, 'Undo applied');
+  };
+
+  const redoEdit = () => {
+    const next = editHistory.redo[0];
+    if (!next) return;
+
+    const present = createEditableSnapshot();
+    setEditHistory({
+      redo: editHistory.redo.slice(1),
+      undo: [...editHistory.undo, present].slice(-editHistoryLimit)
+    });
+    applyEditableSnapshot(next, 'Redo applied');
+  };
+
   const canExport = useMemo(() => Boolean(file && trimEnd > trimStart), [file, trimEnd, trimStart]);
   const activeCaptions = useMemo(
     () => captions.filter((caption) => currentTime >= caption.start && currentTime <= caption.end),
@@ -196,6 +304,8 @@ function App() {
   const quickStartProgress = [Boolean(file), preset.id === 'vertical', hasCaptionWork, canExport].filter(Boolean).length;
   const needsMediaRelink = Boolean(projectMediaName && !file);
   const exportDuration = canExport ? Math.max(0, trimEnd - trimStart) : 0;
+  const canUndo = editHistory.undo.length > 0;
+  const canRedo = editHistory.redo.length > 0;
   const quickStartHint = useMemo(() => {
     if (needsMediaRelink) {
       return `Relink ${projectMediaName} to reopen this path.`;
@@ -290,6 +400,7 @@ function App() {
     const pendingRange = pendingProjectRangeRef.current;
 
     autosaveArmedRef.current = true;
+    clearEditHistory();
     clearExportHistory();
     setCheckpoint(null);
     if (previewUrl) URL.revokeObjectURL(previewUrl);
@@ -373,13 +484,17 @@ function App() {
     }
   };
 
-  const updateTrimStart = (value: number) => {
+  const updateTrimStart = (value: number, options: EditOptions = {}) => {
+    if (value === trimStart) return;
+    if (options.recordHistory !== false) pushUndoSnapshot();
     autosaveArmedRef.current = true;
     setTrimStart(value);
     if (currentTime < value) seek(value);
   };
 
-  const updateTrimEnd = (value: number) => {
+  const updateTrimEnd = (value: number, options: EditOptions = {}) => {
+    if (value === trimEnd) return;
+    if (options.recordHistory !== false) pushUndoSnapshot();
     autosaveArmedRef.current = true;
     setTrimEnd(value);
     if (currentTime > value) seek(value);
@@ -407,6 +522,7 @@ function App() {
 
     const snapshot = checkpoint.snapshot;
     const restoredPreset = aspectPresets.find((item) => item.id === snapshot.presetId) ?? aspectPresets[0];
+    pushUndoSnapshot();
     autosaveArmedRef.current = true;
     setPreset(restoredPreset);
     setExportProfile(exportProfileFromId(snapshot.exportProfileId));
@@ -423,6 +539,8 @@ function App() {
   };
 
   const updatePreset = (nextPreset: AspectPreset) => {
+    if (nextPreset.id === preset.id) return;
+    pushUndoSnapshot();
     if (nextPreset.id !== preset.id) {
       captureCheckpoint('Frame changed', `Restore ${preset.label} frame`);
     }
@@ -431,6 +549,8 @@ function App() {
   };
 
   const updateExportProfile = (nextProfile: ExportProfile) => {
+    if (nextProfile.id === exportProfile.id) return;
+    pushUndoSnapshot();
     if (nextProfile.id !== exportProfile.id) {
       captureCheckpoint('Quality changed', `Restore ${exportProfile.label} export`);
     }
@@ -439,11 +559,15 @@ function App() {
   };
 
   const updateCaptions = (nextCaptions: CaptionCue[]) => {
+    if (editableSnapshotKey({ ...createEditableSnapshot(), captions: nextCaptions }) === editableSnapshotKey(createEditableSnapshot())) return;
+    pushUndoSnapshot();
     autosaveArmedRef.current = true;
     setCaptions(nextCaptions);
   };
 
   const updateCaptionStyle = (nextStyle: CaptionStyle) => {
+    if (nextStyle.id === captionStyle.id) return;
+    pushUndoSnapshot();
     if (nextStyle.id !== captionStyle.id) {
       captureCheckpoint('Caption style changed', `Restore ${captionStyle.label} captions`);
     }
@@ -452,36 +576,50 @@ function App() {
   };
 
   const updateOverlayText = (value: string) => {
+    if (value === overlayText) return;
+    pushUndoSnapshot();
     autosaveArmedRef.current = true;
     setOverlayText(value);
   };
 
   const updateOverlayX = (value: number) => {
+    if (value === overlayX) return;
+    pushUndoSnapshot();
     autosaveArmedRef.current = true;
     setOverlayX(value);
   };
 
   const updateOverlayY = (value: number) => {
+    if (value === overlayY) return;
+    pushUndoSnapshot();
     autosaveArmedRef.current = true;
     setOverlayY(value);
   };
 
   const updateOverlaySize = (value: number) => {
+    if (value === overlaySize) return;
+    pushUndoSnapshot();
     autosaveArmedRef.current = true;
     setOverlaySize(value);
   };
 
   const updateCropX = (value: number) => {
+    if (value === cropX) return;
+    pushUndoSnapshot();
     autosaveArmedRef.current = true;
     setCropX(value);
   };
 
   const updateCropY = (value: number) => {
+    if (value === cropY) return;
+    pushUndoSnapshot();
     autosaveArmedRef.current = true;
     setCropY(value);
   };
 
   const centerCrop = () => {
+    if (cropX === 50 && cropY === 50) return;
+    pushUndoSnapshot();
     if (cropX !== 50 || cropY !== 50) {
       captureCheckpoint('Focus centered', 'Restore previous focus');
     }
@@ -492,7 +630,9 @@ function App() {
 
   const resetTrimToFull = () => {
     if (!duration) return;
+    if (trimStart === 0 && trimEnd === duration) return;
 
+    pushUndoSnapshot();
     autosaveArmedRef.current = true;
     setTrimStart(0);
     setTrimEnd(duration);
@@ -515,6 +655,7 @@ function App() {
 
   const addGuidedCaption = () => {
     captureCheckpoint('Caption added', captions.length ? 'Remove the newest cue' : 'Restore no captions');
+    pushUndoSnapshot();
     autosaveArmedRef.current = true;
     const start = clamp(currentTime || trimStart, 0, duration || currentTime || 0);
     const end = duration ? Math.min(duration, Math.max(start + 0.1, start + 2)) : start + 2;
@@ -527,6 +668,7 @@ function App() {
     if (nextStyle.id === captionStyle.id && captions.length > 0) return;
 
     captureCheckpoint('Pop captions changed', captions.length ? `Restore ${captionStyle.label} captions` : 'Remove the bold cue');
+    pushUndoSnapshot();
     autosaveArmedRef.current = true;
     setCaptionStyle(nextStyle);
     if (captions.length === 0) {
@@ -559,6 +701,7 @@ function App() {
     const shouldWaitForMedia = Boolean(snapshot.mediaName && !mediaMatchesLoadedFile);
 
     autosaveArmedRef.current = false;
+    clearEditHistory();
     clearExportHistory();
     setCheckpoint(null);
     if (mediaConflictsLoadedFile) {
@@ -628,6 +771,7 @@ function App() {
   };
 
   const resetProject = () => {
+    pushUndoSnapshot();
     autosaveArmedRef.current = false;
     skipNextAutosaveRef.current = true;
     clearStoredProject();
@@ -981,9 +1125,19 @@ function App() {
     };
 
     const onKeyDown = (event: KeyboardEvent) => {
+      const normalized = event.key.toLowerCase();
+      const isUndoShortcut = (event.metaKey || event.ctrlKey) && !event.altKey && normalized === 'z' && !event.shiftKey;
+      const isRedoShortcut =
+        (event.metaKey || event.ctrlKey) && !event.altKey && (normalized === 'y' || (normalized === 'z' && event.shiftKey));
+      if (isUndoShortcut || isRedoShortcut) {
+        event.preventDefault();
+        if (isRedoShortcut) redoEdit();
+        else undoEdit();
+        return;
+      }
+
       if (event.metaKey || event.ctrlKey || event.altKey) return;
 
-      const normalized = event.key.toLowerCase();
       const isSpace = normalized === ' ' || normalized === 'spacebar' || event.code === 'Space';
       const isQuestionCommand = normalized === '?' || (normalized === '/' && event.shiftKey);
       if (isQuestionCommand) {
@@ -1072,6 +1226,8 @@ function App() {
   }, [
     addGuidedCaption,
     canExport,
+    canRedo,
+    canUndo,
     checkpoint,
     chooseVerticalFormat,
     cancelExport,
@@ -1085,8 +1241,10 @@ function App() {
     preset.id,
     requestMedia,
     resetTrimToFull,
+    redoEdit,
     restoreCheckpoint,
-    seek
+    seek,
+    undoEdit
   ]);
 
   useEffect(() => {
@@ -1215,6 +1373,18 @@ function App() {
       label: 'Restore checkpoint',
       enabled: Boolean(checkpoint),
       disabledReason: checkpoint ? undefined : 'Make a change first'
+    },
+    {
+      keyHint: 'Ctrl+Z',
+      label: 'Undo edit',
+      enabled: canUndo,
+      disabledReason: canUndo ? undefined : 'Make an edit first'
+    },
+    {
+      keyHint: 'Ctrl+Y',
+      label: 'Redo edit',
+      enabled: canRedo,
+      disabledReason: canRedo ? undefined : 'Undo something first'
     },
     {
       keyHint: 'Left/Right',
@@ -1508,10 +1678,14 @@ function App() {
     <div className="app-shell">
       <TopBar
         canExport={canExport}
+        canRedo={canRedo}
+        canUndo={canUndo}
         exporting={exportState === 'exporting'}
         onCancelExport={cancelExport}
         onExport={exportClip}
+        onRedo={redoEdit}
         onSettings={() => setSettingsOpen(true)}
+        onUndo={undoEdit}
         settingsButtonRef={settingsButtonRef}
       />
       <div className="workspace">
@@ -1628,6 +1802,7 @@ function App() {
           onSeek={seek}
           onTrimStartChange={updateTrimStart}
           onTrimEndChange={updateTrimEnd}
+          onTrimEditStart={pushUndoSnapshot}
         />
         <div className="dock-command-panel">
           <button

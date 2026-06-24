@@ -16,8 +16,9 @@ type TimelineProps = {
   trimStart: number;
   trimEnd: number;
   onSeek: (value: number) => void;
-  onTrimStartChange: (value: number) => void;
-  onTrimEndChange: (value: number) => void;
+  onTrimStartChange: (value: number, options?: { recordHistory?: boolean }) => void;
+  onTrimEndChange: (value: number, options?: { recordHistory?: boolean }) => void;
+  onTrimEditStart: () => void;
 };
 
 export function Timeline({
@@ -29,7 +30,8 @@ export function Timeline({
   trimEnd,
   onSeek,
   onTrimStartChange,
-  onTrimEndChange
+  onTrimEndChange,
+  onTrimEditStart
 }: TimelineProps) {
   const [frames, setFrames] = useState<TimelineFrame[]>([]);
   const [frameStatus, setFrameStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
@@ -185,11 +187,11 @@ export function Timeline({
 
     setDragValue(nextValue);
     if (handle === 'start') {
-      onTrimStartChange(nextValue);
+      onTrimStartChange(nextValue, { recordHistory: false });
       return;
     }
 
-    onTrimEndChange(nextValue);
+    onTrimEndChange(nextValue, { recordHistory: false });
   };
 
   const startTrimDrag = (handle: 'end' | 'start', event: PointerEvent<HTMLDivElement>) => {
@@ -197,6 +199,7 @@ export function Timeline({
     event.preventDefault();
     event.stopPropagation();
     event.currentTarget.setPointerCapture(event.pointerId);
+    onTrimEditStart();
     setDraggingHandle(handle);
     applyTrimDrag(handle, event.clientX);
   };

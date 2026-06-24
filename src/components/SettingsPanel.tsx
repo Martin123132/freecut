@@ -141,7 +141,7 @@ export function SettingsPanel({
                     <div className="export-history-copy">
                       <strong>{item.filename}</strong>
                       <span>
-                        {bytesToSize(item.size)} - {item.profileLabel} - {item.presetLabel} - {item.durationLabel}
+                        {bytesToSize(item.size)} - {item.profileLabel} - {item.presetLabel} - {item.durationLabel} - {item.captionLabel}
                       </span>
                       <small>{exportTimeFormatter.format(item.createdAt)}</small>
                     </div>

@@ -45,10 +45,42 @@ test('imported clip metadata unlocks FreeCut dock readiness', async ({ page }, t
   await expect(page.getByTestId('timeline-clip-block')).toContainText('Source clip');
   await expect(page.getByTestId('timeline-trim-start-handle')).toBeVisible();
   await expect(page.getByTestId('timeline-trim-end-handle')).toBeVisible();
+
+  const outInput = page.locator('.timeline-ranges label').nth(1).locator('input');
+  const initialOut = Number(await outInput.inputValue());
+  const railBox = await page.getByTestId('timeline-rail').boundingBox();
+  const outHandleBox = await page.getByTestId('timeline-trim-end-handle').boundingBox();
+  expect(railBox).not.toBeNull();
+  expect(outHandleBox).not.toBeNull();
+  if (!railBox || !outHandleBox) throw new Error('Timeline rail or trim handle was not measurable.');
+
+  await page.mouse.move(outHandleBox.x + outHandleBox.width / 2, outHandleBox.y + outHandleBox.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(railBox.x + railBox.width * 0.7, outHandleBox.y + outHandleBox.height / 2, { steps: 4 });
+  await expect(page.getByTestId('timeline-drag-readout')).toBeVisible();
+  await page.mouse.up();
+  await expect(page.getByTestId('timeline-drag-readout')).not.toBeVisible();
+  expect(Number(await outInput.inputValue())).toBeLessThan(initialOut);
+
   await page.locator('.stage-wrap').click();
   await page.keyboard.press('c');
   await expect(page.locator('.caption-card')).toHaveCount(1);
   await expect(page.getByTestId('timeline-caption-marker')).toHaveCount(1);
+
+  await page.getByRole('button', { name: 'Duplicate caption 1' }).click();
+  await expect(page.locator('.caption-card')).toHaveCount(2);
+  await page.getByRole('button', { name: 'Split caption 1' }).click();
+  await expect(page.locator('.caption-card')).toHaveCount(3);
+  await expect(page.getByTestId('timeline-caption-marker')).toHaveCount(3);
+  await page.getByTestId('timeline-caption-marker').nth(1).click();
+  await expect
+    .poll(async () =>
+      page.evaluate(() => {
+        const video = document.querySelector('video');
+        return video ? video.currentTime : 0;
+      })
+    )
+    .toBeGreaterThan(0.4);
   await expect(page.getByTestId('export-status')).toContainText('Idle');
 
   const screenshotPath = testInfo.outputPath('import-ready.png');

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       name="description"
-      content="FreeCut is a local-first, open-source short-form video editor for trimming, resizing, captioning, and exporting clips with FFmpeg."
+      content="FreeCut is a local-first, source-available non-commercial short-form video editor for trimming, resizing, captioning, and exporting clips with FFmpeg."
     />
     <title>FreeCut - Local-first video editing</title>
     <style>
@@ -528,7 +528,7 @@
         <div class="hero-copy">
           <h1>FreeCut</h1>
           <p class="lead">
-            A local-first, open-source short-form video editor for trimming, resizing, captioning,
+            A local-first, source-available non-commercial short-form video editor for trimming, resizing, captioning,
             checking, and exporting clips without subscription gates.
           </p>
           <div class="button-row">
@@ -545,8 +545,8 @@
               <span>MP4 output uses FFmpeg with no watermark, render estimates, and readiness checks.</span>
             </div>
             <div class="fact">
-              <strong>AGPL source</strong>
-              <span>The code is public, inspectable, and contribution-ready on GitHub.</span>
+              <strong>Non-commercial source</strong>
+              <span>The code is public and inspectable for personal and non-commercial use.</span>
             </div>
           </div>
         </div>
@@ -569,7 +569,7 @@
             <h2>Current workflow</h2>
             <p>
               The editor focuses on the practical short-form path: bring in one clip,
-              trim it, reframe it, style captions, check it, and export locally.
+              trim it with direct handles, reframe it, style captions, check the render plan, and export locally.
             </p>
           </div>
           <div class="workflow">
@@ -581,12 +581,12 @@
             <article class="step">
               <span class="step-num">2</span>
               <h3>Shape</h3>
-              <p>Set trim points on a media-aware thumbnail timeline, choose the export aspect ratio, and reframe the crop focus.</p>
+              <p>Set trim points with draggable In/Out handles on a media-aware thumbnail timeline, choose the export aspect ratio, and reframe the crop focus.</p>
             </article>
             <article class="step">
               <span class="step-num">3</span>
               <h3>Caption</h3>
-              <p>Add a text overlay, timed captions, SRT/VTT imports, and compact caption style presets for short-form publishing.</p>
+              <p>Add a text overlay, timed captions, clickable timeline markers, duplicate/split actions, SRT/VTT imports, and compact caption style presets.</p>
             </article>
             <article class="step">
               <span class="step-num">4</span>
@@ -610,19 +610,23 @@
               </article>
               <article class="feature">
                 <h3>Guided preflight</h3>
-                <p>Check whether the clip, trim, captions, overlay, aspect ratio, quality settings, and estimated output size are ready to ship.</p>
+                <p>Check whether the clip, trim, captions, overlay, aspect ratio, quality settings, render plan, and estimated output size are ready to ship.</p>
               </article>
               <article class="feature">
                 <h3>Crop focus</h3>
                 <p>Move the export frame horizontally or vertically before rendering vertical, square, or portrait clips.</p>
               </article>
               <article class="feature">
+                <h3>Session checkpoints</h3>
+                <p>Try frame, quality, and caption-style changes with a compact restore action while the edit is still in motion.</p>
+              </article>
+              <article class="feature">
                 <h3>Caption support</h3>
-                <p>Use timed captions directly in the editor, import SRT/VTT caption files, and choose Clean, Bold Box, or Shorts Pop styling.</p>
+                <p>Use timed captions directly in the editor, import SRT/VTT caption files, split or duplicate cues, and choose Clean, Bold Box, or Shorts Pop styling.</p>
               </article>
               <article class="feature">
                 <h3>Export history</h3>
-                <p>Keep recent session exports visible with filename, size, timestamp, frame, profile, and download access.</p>
+                <p>Keep recent session exports visible with filename, size, timestamp, frame, profile, caption plan, and download access.</p>
               </article>
             </div>
           </div>
@@ -670,7 +674,7 @@ npm run dev</code></pre>
 
     <footer class="footer">
       <div class="shell">
-        <span>FreeCut is licensed AGPL-3.0-only.</span>
+        <span>FreeCut is licensed PolyForm Noncommercial 1.0.0.</span>
         <span>Built for local-first video work.</span>
       </div>
     </footer>

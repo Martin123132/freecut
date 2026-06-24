@@ -2126,6 +2126,7 @@ button {
 
 .caption-time,
 .caption-delete,
+.caption-tool,
 .tiny-icon-button {
   display: inline-flex;
   align-items: center;
@@ -2147,9 +2148,20 @@ button {
 }
 
 .caption-delete,
+.caption-tool,
 .tiny-icon-button {
   width: 30px;
   height: 30px;
+}
+
+.caption-card-actions {
+  display: grid;
+  gap: 6px;
+}
+
+.caption-tool:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
 }
 
 .tiny-icon-button {
@@ -2166,6 +2178,7 @@ button {
 
 .caption-time:hover,
 .caption-delete:hover,
+.caption-tool:hover:not(:disabled),
 .tiny-icon-button:hover {
   border-color: var(--accent);
 }
@@ -2369,10 +2382,22 @@ button {
   bottom: 0;
   min-width: 8px;
   height: 8px;
+  padding: 0;
   background: var(--warn);
   border: 1px solid rgba(17, 16, 14, 0.7);
   border-radius: 999px;
   box-shadow: 0 0 0 1px rgba(233, 185, 73, 0.22);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.timeline-caption-marker:hover,
+.timeline-caption-marker:focus-visible {
+  outline: 0;
+  filter: brightness(1.12);
+  box-shadow:
+    0 0 0 1px rgba(233, 185, 73, 0.42),
+    0 0 0 3px rgba(233, 185, 73, 0.18);
 }
 
 .timeline-selection {
@@ -2402,7 +2427,14 @@ button {
   background: var(--accent);
   border: 1px solid rgba(16, 36, 7, 0.48);
   box-shadow: 0 7px 18px rgba(0, 0, 0, 0.28);
-  pointer-events: none;
+  cursor: ew-resize;
+  pointer-events: auto;
+  touch-action: none;
+  user-select: none;
+}
+
+.timeline-trim-handle:hover {
+  filter: brightness(1.08);
 }
 
 .timeline-trim-handle span {
@@ -2420,6 +2452,26 @@ button {
 .timeline-trim-handle-end {
   border-radius: 2px 5px 5px 2px;
   transform: translateX(calc(-100% + 1px));
+}
+
+.timeline-drag-readout {
+  position: absolute;
+  top: -2px;
+  z-index: 7;
+  min-width: 58px;
+  padding: 4px 7px;
+  color: var(--accent-ink);
+  background: var(--accent);
+  border: 1px solid rgba(16, 36, 7, 0.42);
+  border-radius: 999px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  font-size: 10px;
+  font-weight: 950;
+  line-height: 1;
+  pointer-events: none;
+  text-align: center;
+  transform: translate(-50%, -100%);
+  white-space: nowrap;
 }
 
 .timeline-playhead {
@@ -2451,7 +2503,7 @@ button {
 
 .dock-command-panel {
   display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-rows: auto auto auto minmax(0, 1fr);
   min-width: 0;
   background: rgba(24, 23, 20, 0.94);
 }
@@ -2603,6 +2655,42 @@ button {
   border-color: rgba(255, 103, 86, 0.56);
 }
 
+.dock-export-plan {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  padding: 9px 14px;
+  background: rgba(10, 10, 9, 0.22);
+  border-bottom: 1px solid var(--line);
+}
+
+.dock-export-plan span,
+.dock-export-plan em {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 850;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dock-export-plan span {
+  color: var(--accent);
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.dock-export-plan strong {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .timeline-ranges {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -2634,6 +2722,12 @@ button {
   font-size: 12px;
   font-weight: 800;
   text-align: center;
+}
+
+.export-status > span {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .export-progress {

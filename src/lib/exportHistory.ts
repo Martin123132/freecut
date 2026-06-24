@@ -1,4 +1,5 @@
 export type SessionExport = {
+  captionLabel: string;
   createdAt: number;
   durationLabel: string;
   filename: string;

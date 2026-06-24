@@ -1,5 +1,5 @@
 import { Scissors } from 'lucide-react';
-import { useEffect, useState, type KeyboardEvent, type MouseEvent } from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent, type MouseEvent, type PointerEvent } from 'react';
 import { CaptionCue } from '../lib/captions';
 import { clamp, formatTime } from '../lib/format';
 
@@ -33,18 +33,27 @@ export function Timeline({
 }: TimelineProps) {
   const [frames, setFrames] = useState<TimelineFrame[]>([]);
   const [frameStatus, setFrameStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const [draggingHandle, setDraggingHandle] = useState<'end' | 'start' | null>(null);
+  const [dragValue, setDragValue] = useState<number | null>(null);
+  const railRef = useRef<HTMLDivElement | null>(null);
   const max = Math.max(duration, 0.1);
   const startPercent = (trimStart / max) * 100;
   const endPercent = (trimEnd / max) * 100;
   const currentPercent = clamp((currentTime / max) * 100, 0, 100);
+  const dragPercent = dragValue === null ? 0 : clamp((dragValue / max) * 100, 0, 100);
   const canSeek = Boolean(previewUrl && duration > 0);
   const captionMarkers = captions
     .filter((caption) => caption.text.trim() && caption.end > caption.start && caption.end >= 0 && caption.start <= max)
     .map((caption) => ({
       id: caption.id,
       left: clamp((caption.start / max) * 100, 0, 100),
+      start: caption.start,
       width: Math.max(clamp(((caption.end - caption.start) / max) * 100, 0, 100), 1.5)
     }));
+  const snapPoints = [
+    currentTime,
+    ...captions.flatMap((caption) => [caption.start, caption.end])
+  ].filter((point) => Number.isFinite(point) && point >= 0 && point <= max);
 
   useEffect(() => {
     if (!previewUrl || duration <= 0) {
@@ -146,6 +155,67 @@ export function Timeline({
     onSeek(ratio * max);
   };
 
+  const valueFromRail = (clientX: number) => {
+    const rail = railRef.current;
+    if (!rail) return 0;
+    const rect = rail.getBoundingClientRect();
+    return clamp(((clientX - rect.left) / rect.width) * max, 0, max);
+  };
+
+  const snapValue = (value: number) => {
+    const snapDistance = Math.min(0.2, Math.max(0.08, max * 0.025));
+    const closest = snapPoints.reduce<{ distance: number; value: number } | null>((best, point) => {
+      const distance = Math.abs(point - value);
+      if (distance > snapDistance) return best;
+      if (!best || distance < best.distance) return { distance, value: point };
+      return best;
+    }, null);
+
+    return closest ? closest.value : value;
+  };
+
+  const applyTrimDrag = (handle: 'end' | 'start', clientX: number) => {
+    if (!canSeek) return;
+
+    const rawValue = snapValue(valueFromRail(clientX));
+    const nextValue =
+      handle === 'start'
+        ? clamp(rawValue, 0, trimEnd - 0.1)
+        : clamp(rawValue, trimStart + 0.1, max);
+
+    setDragValue(nextValue);
+    if (handle === 'start') {
+      onTrimStartChange(nextValue);
+      return;
+    }
+
+    onTrimEndChange(nextValue);
+  };
+
+  const startTrimDrag = (handle: 'end' | 'start', event: PointerEvent<HTMLDivElement>) => {
+    if (!canSeek) return;
+    event.preventDefault();
+    event.stopPropagation();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    setDraggingHandle(handle);
+    applyTrimDrag(handle, event.clientX);
+  };
+
+  const moveTrimDrag = (handle: 'end' | 'start', event: PointerEvent<HTMLDivElement>) => {
+    if (draggingHandle !== handle) return;
+    event.preventDefault();
+    event.stopPropagation();
+    applyTrimDrag(handle, event.clientX);
+  };
+
+  const stopTrimDrag = (event: PointerEvent<HTMLDivElement>) => {
+    if (!draggingHandle) return;
+    event.preventDefault();
+    event.stopPropagation();
+    setDraggingHandle(null);
+    setDragValue(null);
+  };
+
   const handleRailClick = (event: MouseEvent<HTMLDivElement>) => {
     seekFromRail(event.clientX, event.currentTarget);
   };
@@ -175,6 +245,7 @@ export function Timeline({
         </div>
       </div>
       <div
+        ref={railRef}
         className={`timeline-rail ${previewUrl ? 'has-media' : ''}`}
         data-testid="timeline-rail"
         role={canSeek ? 'slider' : undefined}
@@ -203,12 +274,18 @@ export function Timeline({
           <span>{previewUrl ? 'Source clip' : 'No source'}</span>
           <em>{previewUrl ? formatTime(duration) : 'Import to start'}</em>
         </div>
-        <div className="timeline-caption-track" aria-hidden="true">
+        <div className="timeline-caption-track" aria-label="Caption markers">
           {captionMarkers.map((marker) => (
-            <span
+            <button
+              type="button"
+              aria-label={`Seek to caption at ${formatTime(marker.start)}`}
               className="timeline-caption-marker"
               data-testid="timeline-caption-marker"
               key={marker.id}
+              onClick={(event) => {
+                event.stopPropagation();
+                onSeek(marker.start);
+              }}
               style={{
                 left: `${marker.left}%`,
                 width: `${marker.width}%`
@@ -225,10 +302,31 @@ export function Timeline({
         />
         {canSeek ? (
           <>
-            <div className="timeline-trim-handle timeline-trim-handle-start" data-testid="timeline-trim-start-handle" style={{ left: `${startPercent}%` }}>
+            {draggingHandle && dragValue !== null ? (
+              <div className="timeline-drag-readout" data-testid="timeline-drag-readout" style={{ left: `${dragPercent}%` }}>
+                {draggingHandle === 'start' ? 'In' : 'Out'} {formatTime(dragValue)}
+              </div>
+            ) : null}
+            <div
+              className="timeline-trim-handle timeline-trim-handle-start"
+              data-testid="timeline-trim-start-handle"
+              onPointerDown={(event) => startTrimDrag('start', event)}
+              onPointerMove={(event) => moveTrimDrag('start', event)}
+              onPointerUp={stopTrimDrag}
+              onPointerCancel={stopTrimDrag}
+              style={{ left: `${startPercent}%` }}
+            >
               <span>In</span>
             </div>
-            <div className="timeline-trim-handle timeline-trim-handle-end" data-testid="timeline-trim-end-handle" style={{ left: `${endPercent}%` }}>
+            <div
+              className="timeline-trim-handle timeline-trim-handle-end"
+              data-testid="timeline-trim-end-handle"
+              onPointerDown={(event) => startTrimDrag('end', event)}
+              onPointerMove={(event) => moveTrimDrag('end', event)}
+              onPointerUp={stopTrimDrag}
+              onPointerCancel={stopTrimDrag}
+              style={{ left: `${endPercent}%` }}
+            >
               <span>Out</span>
             </div>
           </>

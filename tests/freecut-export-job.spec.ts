@@ -107,16 +107,21 @@ test('export job progress reaches ready state', async ({ page }, testInfo) => {
   await expect(page.getByTestId('export-readiness')).toContainText('1080 x 1920');
   await expect(page.getByTestId('export-readiness')).toContainText('Shorts Pop');
   await expect(page.getByTestId('export-readiness')).toContainText(/~\d/);
+  await expect(page.getByTestId('dock-export-plan')).toContainText('Balanced MP4');
+  await expect(page.getByTestId('dock-export-plan')).toContainText('Shorts Pop');
+  await expect(page.getByTestId('dock-export-plan')).toContainText('Local FFmpeg worker - no cloud upload');
 
   await page.getByTestId('next-move').click();
-  await expect(page.getByTestId('export-status')).toContainText(/Queued export|Rendering MP4|Uploading source clip/);
+  await expect(page.getByTestId('export-status')).toContainText(/Queued export|Rendering MP4|Preparing local render/);
   await expect(page.getByTestId('export-status')).toContainText('Export ready');
-  await expect(page.getByRole('button', { name: 'Download again' })).toBeVisible();
+  await expect(page.getByTestId('export-status').getByRole('button', { name: /Download freecut-/ })).toBeVisible();
+  await expect(page.getByTestId('export-status').getByRole('button', { name: /Download freecut-/ })).toContainText('Download MP4');
   await page.getByRole('button', { name: 'Project settings' }).click();
   await expect(page.getByTestId('export-history-list')).toContainText('Balanced');
   await expect(page.getByTestId('export-history-list')).toContainText('9:16');
+  await expect(page.getByTestId('export-history-list')).toContainText('Shorts Pop');
   await expect(page.getByTestId('export-history-list')).toContainText('17 B');
-  await expect(page.getByRole('button', { name: /Download freecut-/ })).toBeVisible();
+  await expect(page.getByTestId('export-history-list').getByRole('button', { name: /Download freecut-/ })).toBeVisible();
   expect(exportBody).toMatch(/name="cropX"[\s\S]*80/);
   expect(exportBody).toMatch(/name="cropY"[\s\S]*35/);
   expect(exportBody).toMatch(/name="captionStyleId"[\s\S]*shorts-pop/);

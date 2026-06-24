@@ -1,6 +1,6 @@
 # FreeCut
 
-FreeCut is a local-first, open-source short-form video editor aimed at the trim, resize, caption, and export workflows commonly locked behind web subscriptions.
+FreeCut is a local-first, source-available non-commercial short-form video editor aimed at the trim, resize, caption, and export workflows commonly locked behind web subscriptions.
 
 Public demo page: https://martin123132.github.io/freecut/
 
@@ -8,17 +8,28 @@ Public demo page: https://martin123132.github.io/freecut/
 
 - Import one local clip
 - Preview, scrub, and review playback timing
-- Set trim start/end with a media-aware thumbnail timeline
+- Set trim start/end with draggable In/Out handles on a media-aware thumbnail timeline
 - Choose short-form framing and reframe the crop focus
 - Add a text overlay
-- Add timed captions with style presets (`Clean`, `Bold Box`, `Shorts Pop`) and import SRT/VTT
+- Add timed captions with clickable timeline markers, duplicate/split actions, style presets (`Clean`, `Bold Box`, `Shorts Pop`), and SRT/VTT import
 - Autosave project settings locally and import/export `.freecut.json` project files
 - Restore a saved project with guided source-clip relink and preserved trim timing
-- Check export readiness with a guided ship preflight, render summary, and estimated output size
+- Restore session checkpoints after exploratory frame, quality, and caption-style changes
+- Check export readiness with a guided ship preflight, render summary, dock render plan, and estimated output size
 - Choose Quick, Balanced, or Master export quality
-- Export MP4 through FFmpeg with no watermark and keep recent exports available in-session
-- Use keyboard shortcuts (`I`, `Space`, `C`, `F`, `R`, `E`, `S`, `Q`, `Left/Right`) while editing and `?` / `Shift` + `K` for Mission Control.
-- Mission flow is intentionally guided: Import → Frame → (Optional) Captions → Trim → Export.
+- Export MP4 through the local FFmpeg worker with no watermark and keep recent exports available in-session
+- Use keyboard shortcuts (`I`, `Space`, `C`, `F`, `R`, `E`, `S`, `U`, `Q`, `Left/Right`) while editing and `?` / `Shift` + `K` for Mission Control.
+- Mission flow is intentionally guided: Import -> Frame -> (Optional) Captions -> Trim -> Export.
+
+## License
+
+FreeCut is source-available software for personal and non-commercial use under the PolyForm Noncommercial License 1.0.0.
+
+- See [LICENSE](LICENSE) for the full public license.
+- See [NOTICE.md](NOTICE.md) for required notices and usage boundaries.
+- See [COMMERCIAL-LICENSE.md](COMMERCIAL-LICENSE.md) for examples of uses that require a separate written commercial license.
+
+Commercial use, including paid products, hosted services, enterprise tools, commercial developer tools, and commercial AI systems or training/evaluation pipelines, is not granted by the public license.
 
 ## Development
 

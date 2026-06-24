@@ -213,7 +213,7 @@ function App() {
       return 'Next: set a valid trim range, then ship.';
     }
 
-    return 'Mission ready — export is local.';
+    return 'Mission ready - export is local.';
   }, [canExport, file, hasCaptionWork, needsMediaRelink, preset.id, projectMediaName]);
 
   const exportReadiness = useMemo(
@@ -231,6 +231,11 @@ function App() {
       }),
     [captions.length, captionStyle, cropX, cropY, exportDuration, exportProfile, file, hasCustomOverlayText, preset]
   );
+  const captionPlanLabel = captions.length
+    ? `${captions.length} cue${captions.length === 1 ? '' : 's'} - ${captionStyle.label}`
+    : hasCustomOverlayText
+      ? `Text - ${captionStyle.label}`
+      : `Clean - ${captionStyle.label}`;
   const exportProjectKey = useMemo(
     () =>
       JSON.stringify({
@@ -252,6 +257,17 @@ function App() {
   );
   const latestExport = exportHistory[0] ?? null;
   const latestExportIsCurrent = Boolean(latestExport && latestExport.projectKey === exportProjectKey);
+  const renderPlanLabel = `${exportProfile.label} MP4 - ${preset.label} ${preset.width} x ${preset.height} - ${
+    canExport ? formatTime(exportDuration) : file && duration ? 'Set range' : 'No media'
+  } - ${captionPlanLabel}`;
+  const renderPlanStatus =
+    exportState === 'exporting'
+      ? `Local FFmpeg worker - ${Math.round(exportProgress)}%`
+      : latestExport
+        ? latestExportIsCurrent
+          ? 'Latest export matches this edit'
+          : 'Timeline changed since last export'
+        : 'Local FFmpeg worker - no cloud upload';
   useEffect(() => {
     if (!projectHydratedRef.current) return;
     if (skipInitialAutosaveRef.current) {
@@ -658,6 +674,7 @@ function App() {
     if (!file || !canExport || exportInFlightRef.current) return;
 
     const abortController = new AbortController();
+    const startedCaptionLabel = captionPlanLabel;
     const startedDurationLabel = formatTime(trimEnd - trimStart);
     const startedPresetLabel = preset.label;
     const startedProfileLabel = exportProfile.label;
@@ -667,7 +684,7 @@ function App() {
     exportJobIdRef.current = null;
     setExportState('exporting');
     setExportProgress(1);
-    setExportMessage('Uploading source clip');
+    setExportMessage('Preparing local render');
 
     const payload = new FormData();
     payload.append('video', file);
@@ -720,6 +737,7 @@ function App() {
       downloadUrl(url, filename);
       setExportHistory((current) => {
         const nextExport: SessionExport = {
+          captionLabel: startedCaptionLabel,
           createdAt,
           durationLabel: startedDurationLabel,
           filename,
@@ -739,7 +757,7 @@ function App() {
       });
       setExportState('done');
       setExportProgress(100);
-      setExportMessage('Export ready');
+      setExportMessage(`Export ready - ${filename}`);
     } catch (error) {
       if (error instanceof DOMException && error.name === 'AbortError') {
         setExportState('idle');
@@ -1643,12 +1661,17 @@ function App() {
               ))}
             </div>
           </div>
+          <div className="dock-export-plan" data-testid="dock-export-plan" aria-label={`Render plan: ${renderPlanLabel}. ${renderPlanStatus}`}>
+            <span>Render plan</span>
+            <strong title={renderPlanLabel}>{renderPlanLabel}</strong>
+            <em>{renderPlanStatus}</em>
+          </div>
           <div className={`export-status ${exportState}`} data-testid="export-status">
             <span>
               {exportState === 'exporting'
                 ? `${exportMessage || `Rendering ${exportProfile.label} MP4`} - ${Math.round(exportProgress)}%`
                 : exportState === 'done' && latestExport
-                  ? `${latestExportIsCurrent ? 'Export ready' : 'Previous export'} - ${bytesToSize(latestExport.size)}`
+                  ? `${latestExportIsCurrent ? 'Export ready' : 'Previous export'} - ${latestExport.filename} - ${bytesToSize(latestExport.size)}`
                   : exportMessage || 'Idle'}
             </span>
             {exportState === 'exporting' ? (
@@ -1665,8 +1688,8 @@ function App() {
                 Retry
               </button>
             ) : latestExport ? (
-              <button className="status-download" type="button" onClick={downloadLatestExport}>
-                Download again
+              <button className="status-download" type="button" aria-label={`Download ${latestExport.filename}`} title={`Download ${latestExport.filename}`} onClick={downloadLatestExport}>
+                Download MP4
               </button>
             ) : null}
           </div>

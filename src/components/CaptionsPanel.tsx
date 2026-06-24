@@ -1,4 +1,4 @@
-import { Captions, FileUp, Plus, Trash2 } from 'lucide-react';
+import { Captions, Copy, FileUp, Plus, Scissors, Trash2 } from 'lucide-react';
 import { CaptionCue, createCaptionCue, parseCaptionFile } from '../lib/captions';
 import { CaptionStyle, captionStyles } from '../lib/captionStyles';
 import { clamp, formatTime } from '../lib/format';
@@ -41,6 +41,30 @@ export function CaptionsPanel({
 
   const removeCaption = (id: string) => {
     onCaptionsChange(captions.filter((caption) => caption.id !== id));
+  };
+
+  const duplicateCaption = (caption: CaptionCue, index: number) => {
+    const length = Math.max(0.1, caption.end - caption.start);
+    const start = duration
+      ? clamp(caption.end + 0.05, 0, Math.max(0, duration - 0.1))
+      : caption.end + 0.05;
+    const end = duration ? Math.min(duration, start + length) : start + length;
+    const nextCaptions = [...captions];
+    nextCaptions.splice(index + 1, 0, createCaptionCue(start, Math.max(start + 0.1, end), caption.text));
+    onCaptionsChange(nextCaptions);
+  };
+
+  const splitCaption = (caption: CaptionCue, index: number) => {
+    const canUsePlayhead = currentTime > caption.start + 0.1 && currentTime < caption.end - 0.1;
+    const splitAt = canUsePlayhead ? currentTime : caption.start + (caption.end - caption.start) / 2;
+    const nextCaptions = [...captions];
+    nextCaptions.splice(
+      index,
+      1,
+      { ...caption, end: splitAt },
+      createCaptionCue(splitAt, caption.end, caption.text)
+    );
+    onCaptionsChange(nextCaptions);
   };
 
   const importCaptions = async (file: File | undefined) => {
@@ -141,15 +165,36 @@ export function CaptionsPanel({
                   onChange={(event) => updateCaption(caption.id, { text: event.target.value })}
                 />
               </div>
-              <button
-                className="caption-delete"
-                type="button"
-                aria-label={`Delete caption ${index + 1}`}
-                title="Delete caption"
-                onClick={() => removeCaption(caption.id)}
-              >
-                <Trash2 size={14} />
-              </button>
+              <div className="caption-card-actions">
+                <button
+                  className="caption-tool"
+                  type="button"
+                  aria-label={`Duplicate caption ${index + 1}`}
+                  title="Duplicate caption"
+                  onClick={() => duplicateCaption(caption, index)}
+                >
+                  <Copy size={13} />
+                </button>
+                <button
+                  className="caption-tool"
+                  type="button"
+                  aria-label={`Split caption ${index + 1}`}
+                  title="Split caption"
+                  disabled={caption.end - caption.start <= 0.2}
+                  onClick={() => splitCaption(caption, index)}
+                >
+                  <Scissors size={13} />
+                </button>
+                <button
+                  className="caption-delete"
+                  type="button"
+                  aria-label={`Delete caption ${index + 1}`}
+                  title="Delete caption"
+                  onClick={() => removeCaption(caption.id)}
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
             </article>
           ))
         ) : (

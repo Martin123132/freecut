@@ -1601,6 +1601,7 @@ function App() {
       </div>
       <footer className="bottom-dock">
         <Timeline
+          captions={captions}
           currentTime={currentTime}
           duration={duration}
           previewUrl={previewUrl}

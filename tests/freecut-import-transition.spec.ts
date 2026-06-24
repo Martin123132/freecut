@@ -23,6 +23,7 @@ test('imported clip metadata unlocks FreeCut dock readiness', async ({ page }, t
   await expect(page.getByText('Load a video')).toBeVisible();
   await expect(page.getByTestId('dock-readiness')).toHaveAttribute('aria-label', 'Project readiness: 2/5 ready');
   await expect(page.getByTestId('next-move')).toContainText('Bring in a clip');
+  await expect(page.getByTestId('timeline-clip-block')).toContainText('No source');
 
   await page.getByTestId('media-import-input').setInputFiles(smokeVideoPath);
 
@@ -41,6 +42,13 @@ test('imported clip metadata unlocks FreeCut dock readiness', async ({ page }, t
   await expect(page.getByTestId('next-move')).toContainText('Export');
   await expect(page.getByTestId('next-move')).toBeEnabled();
   await expect(page.getByTestId('timeline-rail')).toHaveAttribute('role', 'slider');
+  await expect(page.getByTestId('timeline-clip-block')).toContainText('Source clip');
+  await expect(page.getByTestId('timeline-trim-start-handle')).toBeVisible();
+  await expect(page.getByTestId('timeline-trim-end-handle')).toBeVisible();
+  await page.locator('.stage-wrap').click();
+  await page.keyboard.press('c');
+  await expect(page.locator('.caption-card')).toHaveCount(1);
+  await expect(page.getByTestId('timeline-caption-marker')).toHaveCount(1);
   await expect(page.getByTestId('export-status')).toContainText('Idle');
 
   const screenshotPath = testInfo.outputPath('import-ready.png');

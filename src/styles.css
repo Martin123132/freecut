@@ -2254,7 +2254,7 @@ button {
 
 .timeline-rail {
   position: relative;
-  height: 48px;
+  height: 58px;
   margin: 12px 0;
   overflow: hidden;
   background:
@@ -2311,10 +2311,74 @@ button {
   text-align: center;
 }
 
+.timeline-clip-block {
+  position: absolute;
+  inset: 8px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+  padding: 0 52px;
+  pointer-events: none;
+  border: 1px solid rgba(142, 224, 95, 0.28);
+  border-radius: 7px;
+  background: rgba(142, 224, 95, 0.08);
+}
+
+.timeline-clip-block.empty {
+  color: var(--faint);
+  background: rgba(0, 0, 0, 0.12);
+  border-color: rgba(116, 109, 99, 0.36);
+  border-style: dashed;
+}
+
+.timeline-clip-block span,
+.timeline-clip-block em {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.timeline-clip-block span {
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 950;
+}
+
+.timeline-clip-block em {
+  color: var(--muted);
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 850;
+}
+
+.timeline-caption-track {
+  position: absolute;
+  right: 10px;
+  bottom: 6px;
+  left: 10px;
+  z-index: 4;
+  height: 8px;
+  pointer-events: none;
+}
+
+.timeline-caption-marker {
+  position: absolute;
+  bottom: 0;
+  min-width: 8px;
+  height: 8px;
+  background: var(--warn);
+  border: 1px solid rgba(17, 16, 14, 0.7);
+  border-radius: 999px;
+  box-shadow: 0 0 0 1px rgba(233, 185, 73, 0.22);
+}
+
 .timeline-selection {
   position: absolute;
-  top: 0;
-  bottom: 0;
+  top: 6px;
+  bottom: 6px;
   z-index: 2;
   min-width: 2px;
   background:
@@ -2322,14 +2386,47 @@ button {
     rgba(18, 32, 11, 0.34);
   border-left: 2px solid var(--accent);
   border-right: 2px solid var(--accent);
+  border-radius: 6px;
   pointer-events: none;
+}
+
+.timeline-trim-handle {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  z-index: 5;
+  display: grid;
+  width: 22px;
+  place-items: center;
+  color: var(--accent-ink);
+  background: var(--accent);
+  border: 1px solid rgba(16, 36, 7, 0.48);
+  box-shadow: 0 7px 18px rgba(0, 0, 0, 0.28);
+  pointer-events: none;
+}
+
+.timeline-trim-handle span {
+  font-size: 8px;
+  font-weight: 950;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.timeline-trim-handle-start {
+  border-radius: 5px 2px 2px 5px;
+  transform: translateX(-1px);
+}
+
+.timeline-trim-handle-end {
+  border-radius: 2px 5px 5px 2px;
+  transform: translateX(calc(-100% + 1px));
 }
 
 .timeline-playhead {
   position: absolute;
   top: -1px;
   bottom: -1px;
-  z-index: 3;
+  z-index: 6;
   width: 2px;
   background: var(--text);
   box-shadow:

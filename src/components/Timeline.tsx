@@ -1,5 +1,6 @@
 import { Scissors } from 'lucide-react';
 import { useEffect, useState, type KeyboardEvent, type MouseEvent } from 'react';
+import { CaptionCue } from '../lib/captions';
 import { clamp, formatTime } from '../lib/format';
 
 type TimelineFrame = {
@@ -8,6 +9,7 @@ type TimelineFrame = {
 };
 
 type TimelineProps = {
+  captions: CaptionCue[];
   currentTime: number;
   duration: number;
   previewUrl: string | null;
@@ -19,6 +21,7 @@ type TimelineProps = {
 };
 
 export function Timeline({
+  captions,
   currentTime,
   duration,
   previewUrl,
@@ -35,6 +38,13 @@ export function Timeline({
   const endPercent = (trimEnd / max) * 100;
   const currentPercent = clamp((currentTime / max) * 100, 0, 100);
   const canSeek = Boolean(previewUrl && duration > 0);
+  const captionMarkers = captions
+    .filter((caption) => caption.text.trim() && caption.end > caption.start && caption.end >= 0 && caption.start <= max)
+    .map((caption) => ({
+      id: caption.id,
+      left: clamp((caption.start / max) * 100, 0, 100),
+      width: Math.max(clamp(((caption.end - caption.start) / max) * 100, 0, 100), 1.5)
+    }));
 
   useEffect(() => {
     if (!previewUrl || duration <= 0) {
@@ -189,6 +199,23 @@ export function Timeline({
             </div>
           )}
         </div>
+        <div className={`timeline-clip-block ${previewUrl ? 'ready' : 'empty'}`} data-testid="timeline-clip-block" aria-hidden="true">
+          <span>{previewUrl ? 'Source clip' : 'No source'}</span>
+          <em>{previewUrl ? formatTime(duration) : 'Import to start'}</em>
+        </div>
+        <div className="timeline-caption-track" aria-hidden="true">
+          {captionMarkers.map((marker) => (
+            <span
+              className="timeline-caption-marker"
+              data-testid="timeline-caption-marker"
+              key={marker.id}
+              style={{
+                left: `${marker.left}%`,
+                width: `${marker.width}%`
+              }}
+            />
+          ))}
+        </div>
         <div
           className="timeline-selection"
           style={{
@@ -196,6 +223,16 @@ export function Timeline({
             right: `${100 - endPercent}%`
           }}
         />
+        {canSeek ? (
+          <>
+            <div className="timeline-trim-handle timeline-trim-handle-start" data-testid="timeline-trim-start-handle" style={{ left: `${startPercent}%` }}>
+              <span>In</span>
+            </div>
+            <div className="timeline-trim-handle timeline-trim-handle-end" data-testid="timeline-trim-end-handle" style={{ left: `${endPercent}%` }}>
+              <span>Out</span>
+            </div>
+          </>
+        ) : null}
         <div className="timeline-playhead" style={{ left: `${currentPercent}%` }} />
       </div>
       <div className="timeline-ranges">

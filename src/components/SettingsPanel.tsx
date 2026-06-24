@@ -1,10 +1,12 @@
-import { Download, HardDrive, RotateCcw, Save, ShieldCheck, X } from 'lucide-react';
+import { Download, HardDrive, Play, RotateCcw, Route, Save, ShieldCheck, X } from 'lucide-react';
 import { type KeyboardEvent, useEffect, useRef } from 'react';
 import type { SessionExport } from '../lib/exportHistory';
 import { bytesToSize } from '../lib/format';
 
 type SettingsPanelProps = {
   apiDataRoot: string;
+  canExport: boolean;
+  currentProjectKey: string;
   exportLabel: string;
   exportHistory: SessionExport[];
   mediaName: string | null;
@@ -12,6 +14,8 @@ type SettingsPanelProps = {
   projectStatus: string;
   onClose: () => void;
   onDownloadExport: (id: string) => void;
+  onRenderExport: (id: string) => void;
+  onRestoreExportRoute: (id: string) => void;
   onResetProject: () => void;
   onSaveProject: () => void;
 };
@@ -25,6 +29,8 @@ const exportTimeFormatter = new Intl.DateTimeFormat(undefined, {
 
 export function SettingsPanel({
   apiDataRoot,
+  canExport,
+  currentProjectKey,
   exportLabel,
   exportHistory,
   mediaName,
@@ -32,6 +38,8 @@ export function SettingsPanel({
   projectStatus,
   onClose,
   onDownloadExport,
+  onRenderExport,
+  onRestoreExportRoute,
   onResetProject,
   onSaveProject
 }: SettingsPanelProps) {
@@ -136,26 +144,48 @@ export function SettingsPanel({
             </div>
             {exportHistory.length ? (
               <div className="export-history-list" data-testid="export-history-list">
-                {exportHistory.map((item) => (
-                  <div className="export-history-item" key={item.id}>
-                    <div className="export-history-copy">
-                      <strong>{item.filename}</strong>
-                      <span>
-                        {bytesToSize(item.size)} - {item.profileLabel} - {item.presetLabel} - {item.durationLabel} - {item.captionLabel}
-                      </span>
-                      <small>{exportTimeFormatter.format(item.createdAt)}</small>
+                {exportHistory.map((item) => {
+                  const matchesCurrentEdit = item.projectKey === currentProjectKey;
+                  const canRenderAgain = matchesCurrentEdit && canExport;
+                  const statusLabel = item.available ? 'Ready now' : item.projectSnapshot ? 'Restore route' : 'Receipt';
+
+                  return (
+                    <div className="export-history-item" key={item.id}>
+                      <div className="export-history-copy">
+                        <span className={item.available ? 'export-history-state available' : item.projectSnapshot ? 'export-history-state route' : 'export-history-state receipt'}>
+                          {statusLabel}
+                        </span>
+                        <strong>{item.filename}</strong>
+                        <span>
+                          {bytesToSize(item.size)} - {item.profileLabel} - {item.presetLabel} - {item.durationLabel} - {item.captionLabel}
+                        </span>
+                        <small>{item.sourceName ? `${item.sourceName} - ` : ''}{exportTimeFormatter.format(item.createdAt)}</small>
+                      </div>
+                      <div className="export-history-actions">
+                        {item.available ? (
+                          <button type="button" aria-label={`Download ${item.filename}`} title={`Download ${item.filename}`} onClick={() => onDownloadExport(item.id)}>
+                            <Download size={14} />
+                          </button>
+                        ) : null}
+                        {canRenderAgain ? (
+                          <button type="button" aria-label={`Render ${item.filename} again`} title="Render this edit again" onClick={() => onRenderExport(item.id)}>
+                            <Play size={13} />
+                            Render
+                          </button>
+                        ) : item.projectSnapshot ? (
+                          <button type="button" aria-label={`Restore route for ${item.filename}`} title="Restore this render route" onClick={() => onRestoreExportRoute(item.id)}>
+                            <Route size={13} />
+                            Restore
+                          </button>
+                        ) : (
+                          <button type="button" aria-label={`${item.filename} receipt needs a saved route`} title="This older receipt needs the project to be opened again" disabled>
+                            Restore
+                          </button>
+                        )}
+                      </div>
                     </div>
-                    <button
-                      type="button"
-                      aria-label={item.available ? `Download ${item.filename}` : `${item.filename} download needs re-export`}
-                      title={item.available ? `Download ${item.filename}` : 'Re-export this cut to download again'}
-                      disabled={!item.available}
-                      onClick={() => onDownloadExport(item.id)}
-                    >
-                      {item.available ? <Download size={14} /> : 'Re-export'}
-                    </button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <p className="settings-empty">No exports yet</p>

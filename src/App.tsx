@@ -840,6 +840,23 @@ function App() {
     setProjectStatus('Recent restored');
   };
 
+  const restoreExportRoute = (id: string) => {
+    const item = exportHistory.find((exportItem) => exportItem.id === id);
+    if (!item?.projectSnapshot) {
+      setExportMessage('Open the saved project to restore this older receipt');
+      return;
+    }
+
+    applyProject(item.projectSnapshot);
+    writeStoredProject(item.projectSnapshot);
+    rememberProject(item.projectSnapshot);
+    setSettingsOpen(false);
+    setProjectStatus('Export route restored');
+    setExportState('idle');
+    setExportProgress(0);
+    setExportMessage(item.sourceName ? `Route restored - relink ${item.sourceName}` : 'Route restored - relink source');
+  };
+
   const downloadUrl = (url: string, filename: string) => {
     const link = document.createElement('a');
     link.href = url;
@@ -858,6 +875,8 @@ function App() {
     const startedPresetLabel = preset.label;
     const startedProfileLabel = exportProfile.label;
     const startedProjectKey = exportProjectKey;
+    const startedProjectSnapshot = buildProjectSnapshot();
+    const startedSourceName = file.name;
     exportInFlightRef.current = true;
     exportAbortRef.current = abortController;
     exportJobIdRef.current = null;
@@ -925,7 +944,9 @@ function App() {
           presetLabel: startedPresetLabel,
           profileLabel: startedProfileLabel,
           projectKey: startedProjectKey,
+          projectSnapshot: startedProjectSnapshot,
           size: blob.size,
+          sourceName: startedSourceName,
           url
         };
         const next = [nextExport, ...current].slice(0, 5);
@@ -1023,6 +1044,18 @@ function App() {
   const downloadLatestExport = () => {
     if (!latestExport) return;
     downloadExportFromHistory(latestExport.id);
+  };
+
+  const renderExportFromHistory = (id: string) => {
+    const item = exportHistory.find((exportItem) => exportItem.id === id);
+    if (!item) return;
+    if (item.projectKey !== exportProjectKey || !canExport) {
+      restoreExportRoute(id);
+      return;
+    }
+
+    setSettingsOpen(false);
+    void exportClip();
   };
 
   const requestMedia = () => mediaInputRef.current?.click();
@@ -1914,6 +1947,8 @@ function App() {
             <span>
               {exportState === 'exporting'
                 ? `${exportMessage || `Rendering ${exportProfile.label} MP4`} - ${Math.round(exportProgress)}%`
+                : exportState === 'idle' && exportMessage
+                  ? exportMessage
                 : latestExport
                   ? `${latestExportIsCurrent ? (latestExport.available ? 'Export ready' : 'Export receipt') : 'Previous export'} - ${latestExport.filename} - ${bytesToSize(latestExport.size)}${latestExport.available ? '' : ' - re-export to download'}`
                   : exportMessage || 'Idle'}
@@ -1942,6 +1977,8 @@ function App() {
       {settingsOpen ? (
         <SettingsPanel
           apiDataRoot={apiHealth?.dataRoot ?? ''}
+          canExport={canExport}
+          currentProjectKey={exportProjectKey}
           exportLabel={exportProfile.label}
           exportHistory={exportHistory}
           mediaName={file?.name ?? projectMediaName}
@@ -1949,6 +1986,8 @@ function App() {
           projectStatus={projectStatus}
           onClose={closeSettings}
           onDownloadExport={downloadExportFromHistory}
+          onRenderExport={renderExportFromHistory}
+          onRestoreExportRoute={restoreExportRoute}
           onResetProject={resetProject}
           onSaveProject={saveProjectFile}
         />

@@ -18,7 +18,7 @@ Public demo page: https://martin123132.github.io/freecut/
 - Undo and redo edit changes from the toolbar or keyboard
 - Check export readiness with a guided ship preflight, render summary, dock render plan, and estimated output size
 - Choose Quick, Balanced, or Master export quality
-- Export MP4 through the local FFmpeg worker with no watermark, session downloads, and reload-safe export receipts
+- Export MP4 through the local FFmpeg worker with no watermark, session downloads, render-again actions, and reload-safe export receipts that can restore the route
 - Use keyboard shortcuts (`I`, `Space`, `C`, `F`, `R`, `E`, `S`, `U`, `Ctrl+Z`, `Ctrl+Y`, `Q`, `Left/Right`) while editing and `?` / `Shift` + `K` for Mission Control.
 - Mission flow is intentionally guided: Import -> Frame -> (Optional) Captions -> Trim -> Export.
 

@@ -145,7 +145,23 @@ test('export receipt storage restores metadata without stale download URLs', () 
         presetLabel: '9:16',
         profileLabel: 'Balanced',
         projectKey: 'same-edit',
+        projectSnapshot: createProjectSnapshot({
+          mediaName: 'receipt-source.webm',
+          presetId: 'vertical',
+          exportProfileId: 'balanced',
+          captionStyleId: 'shorts-pop',
+          trimStart: 0.2,
+          trimEnd: 1.2,
+          overlayText: '',
+          overlayX: 50,
+          overlayY: 72,
+          overlaySize: 4.5,
+          cropX: 80,
+          cropY: 35,
+          captions: [{ id: 'receipt-cue', start: 0.3, end: 0.9, text: 'Receipt route' }]
+        }),
         size: 1024,
+        sourceName: 'receipt-source.webm',
         url: 'blob:stale'
       },
       {
@@ -161,7 +177,10 @@ test('export receipt storage restores metadata without stale download URLs', () 
     captionLabel: 'Shorts Pop',
     filename: 'freecut-1782264000000.mp4',
     projectKey: 'same-edit',
+    sourceName: 'receipt-source.webm',
     size: 1024,
     url: null
   });
+  expect(receipts[0].projectSnapshot?.mediaName).toBe('receipt-source.webm');
+  expect(receipts[0].projectSnapshot?.cropX).toBe(80);
 });

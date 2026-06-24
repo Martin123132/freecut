@@ -2985,7 +2985,7 @@ button {
 
 .export-history-item {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr);
   gap: 9px;
   align-items: center;
   min-height: 64px;
@@ -2999,6 +2999,30 @@ button {
   display: grid;
   gap: 3px;
   min-width: 0;
+}
+
+.export-history-state {
+  justify-self: start;
+  max-width: 100%;
+  padding: 3px 6px;
+  color: var(--accent-ink);
+  background: var(--accent);
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 950;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.export-history-state.route {
+  color: #1f1a08;
+  background: var(--warn);
+}
+
+.export-history-state.receipt {
+  color: var(--muted);
+  background: var(--panel-strong);
+  border: 1px solid var(--line);
 }
 
 .export-history-copy strong,
@@ -3026,10 +3050,17 @@ button {
   color: var(--faint);
 }
 
-.export-history-item button {
+.export-history-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.export-history-actions button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 5px;
   min-width: 32px;
   height: 32px;
   padding: 0 8px;
@@ -3042,7 +3073,7 @@ button {
   font-weight: 950;
 }
 
-.export-history-item button:disabled {
+.export-history-actions button:disabled {
   color: var(--faint);
   background: var(--panel-strong);
   border: 1px solid var(--line);

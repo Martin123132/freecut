@@ -1,3 +1,5 @@
+import { parseProjectText, type ProjectSnapshot, serializeProject } from './project';
+
 export type SessionExport = {
   available: boolean;
   captionLabel: string;
@@ -8,7 +10,9 @@ export type SessionExport = {
   presetLabel: string;
   profileLabel: string;
   projectKey: string;
+  projectSnapshot: ProjectSnapshot | null;
   size: number;
+  sourceName: string | null;
   url: string | null;
 };
 
@@ -81,7 +85,9 @@ function sanitizeExportReceipt(input: unknown): SessionExport | null {
     presetLabel: readString(candidate.presetLabel) || 'Frame',
     profileLabel: readString(candidate.profileLabel) || 'Balanced',
     projectKey: readString(candidate.projectKey) || '',
+    projectSnapshot: sanitizeProjectSnapshot(candidate.projectSnapshot),
     size: readNumber(candidate.size, 0, 0, Number.MAX_SAFE_INTEGER),
+    sourceName: readString(candidate.sourceName) || null,
     url: null
   };
 }
@@ -96,8 +102,20 @@ function toStoredReceipt(item: SessionExport): StoredExportReceipt {
     presetLabel: item.presetLabel,
     profileLabel: item.profileLabel,
     projectKey: item.projectKey,
-    size: item.size
+    projectSnapshot: item.projectSnapshot ? parseProjectText(serializeProject(item.projectSnapshot)) : null,
+    size: item.size,
+    sourceName: item.sourceName
   };
+}
+
+function sanitizeProjectSnapshot(value: unknown): ProjectSnapshot | null {
+  if (!value) return null;
+
+  try {
+    return parseProjectText(JSON.stringify(value));
+  } catch {
+    return null;
+  }
 }
 
 function readString(value: unknown) {

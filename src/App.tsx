@@ -13,6 +13,7 @@ import { QuickStartPanel } from './components/QuickStartPanel';
 import { ShortcutHintStrip } from './components/ShortcutHintStrip';
 import { CommandAction, CommandPalette } from './components/CommandPalette';
 import { ExploreAction, ExplorePanel } from './components/ExplorePanel';
+import { CheckpointPanel, SessionCheckpoint } from './components/CheckpointPanel';
 import { CaptionCue, createCaptionCue, normalizeCaptions } from './lib/captions';
 import { CaptionStyle, captionStyleFromId, defaultCaptionStyle } from './lib/captionStyles';
 import { buildExportReadiness } from './lib/exportEstimate';
@@ -43,6 +44,17 @@ type ExportJobStatus = {
 type ApiHealth = {
   dataRoot?: string;
   ok?: boolean;
+};
+type CheckpointSnapshot = {
+  captionStyleId: string;
+  captions: CaptionCue[];
+  cropX: number;
+  cropY: number;
+  exportProfileId: string;
+  presetId: string;
+};
+type ActiveCheckpoint = SessionCheckpoint & {
+  snapshot: CheckpointSnapshot;
 };
 type NextMove = {
   action: () => void;
@@ -83,6 +95,7 @@ function App() {
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [projectStatus, setProjectStatus] = useState('Autosave ready');
   const [projectMediaName, setProjectMediaName] = useState<string | null>(null);
+  const [checkpoint, setCheckpoint] = useState<ActiveCheckpoint | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const settingsButtonRef = useRef<HTMLButtonElement | null>(null);
   const mediaInputRef = useRef<HTMLInputElement | null>(null);
@@ -96,6 +109,7 @@ function App() {
   const exportAbortRef = useRef<AbortController | null>(null);
   const exportJobIdRef = useRef<string | null>(null);
   const exportHistoryRef = useRef<SessionExport[]>([]);
+  const checkpointIdRef = useRef(0);
 
   useEffect(() => {
     try {
@@ -261,6 +275,7 @@ function App() {
 
     autosaveArmedRef.current = true;
     clearExportHistory();
+    setCheckpoint(null);
     if (previewUrl) URL.revokeObjectURL(previewUrl);
 
     setFile(nextFile);
@@ -354,12 +369,55 @@ function App() {
     if (currentTime > value) seek(value);
   };
 
+  const captureCheckpoint = (label: string, detail: string) => {
+    checkpointIdRef.current += 1;
+    setCheckpoint({
+      detail,
+      id: checkpointIdRef.current,
+      label,
+      snapshot: {
+        captionStyleId: captionStyle.id,
+        captions: captions.map((caption) => ({ ...caption })),
+        cropX,
+        cropY,
+        exportProfileId: exportProfile.id,
+        presetId: preset.id
+      }
+    });
+  };
+
+  const restoreCheckpoint = () => {
+    if (!checkpoint) return;
+
+    const snapshot = checkpoint.snapshot;
+    const restoredPreset = aspectPresets.find((item) => item.id === snapshot.presetId) ?? aspectPresets[0];
+    autosaveArmedRef.current = true;
+    setPreset(restoredPreset);
+    setExportProfile(exportProfileFromId(snapshot.exportProfileId));
+    setCaptionStyle(captionStyleFromId(snapshot.captionStyleId));
+    setCaptions(snapshot.captions.map((caption) => ({ ...caption })));
+    setCropX(snapshot.cropX);
+    setCropY(snapshot.cropY);
+    setCheckpoint(null);
+    setProjectStatus('Checkpoint restored');
+  };
+
+  const dismissCheckpoint = () => {
+    setCheckpoint(null);
+  };
+
   const updatePreset = (nextPreset: AspectPreset) => {
+    if (nextPreset.id !== preset.id) {
+      captureCheckpoint('Frame changed', `Restore ${preset.label} frame`);
+    }
     autosaveArmedRef.current = true;
     setPreset(nextPreset);
   };
 
   const updateExportProfile = (nextProfile: ExportProfile) => {
+    if (nextProfile.id !== exportProfile.id) {
+      captureCheckpoint('Quality changed', `Restore ${exportProfile.label} export`);
+    }
     autosaveArmedRef.current = true;
     setExportProfile(nextProfile);
   };
@@ -370,6 +428,9 @@ function App() {
   };
 
   const updateCaptionStyle = (nextStyle: CaptionStyle) => {
+    if (nextStyle.id !== captionStyle.id) {
+      captureCheckpoint('Caption style changed', `Restore ${captionStyle.label} captions`);
+    }
     autosaveArmedRef.current = true;
     setCaptionStyle(nextStyle);
   };
@@ -405,6 +466,9 @@ function App() {
   };
 
   const centerCrop = () => {
+    if (cropX !== 50 || cropY !== 50) {
+      captureCheckpoint('Focus centered', 'Restore previous focus');
+    }
     autosaveArmedRef.current = true;
     setCropX(50);
     setCropY(50);
@@ -434,6 +498,7 @@ function App() {
   };
 
   const addGuidedCaption = () => {
+    captureCheckpoint('Caption added', captions.length ? 'Remove the newest cue' : 'Restore no captions');
     autosaveArmedRef.current = true;
     const start = clamp(currentTime || trimStart, 0, duration || currentTime || 0);
     const end = duration ? Math.min(duration, Math.max(start + 0.1, start + 2)) : start + 2;
@@ -441,8 +506,18 @@ function App() {
   };
 
   const chooseShortsPopCaption = () => {
-    updateCaptionStyle(captionStyleFromId('shorts-pop'));
-    if (file && captions.length === 0) addGuidedCaption();
+    if (!file) return;
+    const nextStyle = captionStyleFromId('shorts-pop');
+    if (nextStyle.id === captionStyle.id && captions.length > 0) return;
+
+    captureCheckpoint('Pop captions changed', captions.length ? `Restore ${captionStyle.label} captions` : 'Remove the bold cue');
+    autosaveArmedRef.current = true;
+    setCaptionStyle(nextStyle);
+    if (captions.length === 0) {
+      const start = clamp(currentTime || trimStart, 0, duration || currentTime || 0);
+      const end = duration ? Math.min(duration, Math.max(start + 0.1, start + 2)) : start + 2;
+      setCaptions((items) => [...items, createCaptionCue(start, end, 'Say it clearly')]);
+    }
   };
 
   const buildProjectSnapshot = () =>
@@ -469,6 +544,7 @@ function App() {
 
     autosaveArmedRef.current = false;
     clearExportHistory();
+    setCheckpoint(null);
     if (mediaConflictsLoadedFile) {
       if (previewUrl) URL.revokeObjectURL(previewUrl);
       setFile(null);
@@ -539,6 +615,7 @@ function App() {
     autosaveArmedRef.current = false;
     skipNextAutosaveRef.current = true;
     clearStoredProject();
+    setCheckpoint(null);
     pendingProjectRangeRef.current = null;
     setProjectMediaName(file?.name ?? null);
     setPreset(aspectPresets[0]);
@@ -944,6 +1021,12 @@ function App() {
         return;
       }
 
+      if (normalized === 'u' && checkpoint) {
+        event.preventDefault();
+        restoreCheckpoint();
+        return;
+      }
+
       if (normalized === 'f' && preset.id !== 'vertical') {
         event.preventDefault();
         chooseVerticalFormat();
@@ -971,6 +1054,7 @@ function App() {
   }, [
     addGuidedCaption,
     canExport,
+    checkpoint,
     chooseVerticalFormat,
     cancelExport,
     currentTime,
@@ -983,6 +1067,7 @@ function App() {
     preset.id,
     requestMedia,
     resetTrimToFull,
+    restoreCheckpoint,
     seek
   ]);
 
@@ -1106,6 +1191,12 @@ function App() {
       keyHint: 'S',
       label: 'Settings',
       enabled: true
+    },
+    {
+      keyHint: 'U',
+      label: 'Restore checkpoint',
+      enabled: Boolean(checkpoint),
+      disabledReason: checkpoint ? undefined : 'Make a change first'
     },
     {
       keyHint: 'Left/Right',
@@ -1438,6 +1529,7 @@ function App() {
             />
           )}
           <ExplorePanel actions={exploreActions} />
+          <CheckpointPanel checkpoint={checkpoint} onDismiss={dismissCheckpoint} onRestore={restoreCheckpoint} />
           <ShortcutHintStrip items={shortcutHints} />
           <ProjectPanel
             mediaName={file?.name ?? projectMediaName}

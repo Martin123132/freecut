@@ -127,3 +127,46 @@ test('explore panel exposes optional moves without breaking the guided path', as
   await expect(page.locator('.caption-style.active')).toContainText('Shorts Pop');
   await expect(page.getByTestId('mission-step-captions')).toHaveClass(/done/);
 });
+
+test('session checkpoint restores exploratory changes', async ({ page }, testInfo) => {
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await page.evaluate(() => {
+    window.localStorage.setItem('freecut.quickstart.v1', '1');
+    window.localStorage.removeItem('freecut.project.v1');
+  });
+  await page.reload();
+
+  const explorePanel = page.getByTestId('explore-panel');
+  const checkpointPanel = page.getByTestId('checkpoint-panel');
+
+  await explorePanel.getByTestId('explore-master').click();
+  await expect(checkpointPanel).toContainText('Quality changed');
+  await expect(page.locator('.output-profile.active')).toContainText('Master');
+  await checkpointPanel.getByTestId('checkpoint-restore').click();
+  await expect(page.locator('.output-profile.active')).toContainText('Balanced');
+  await expect(checkpointPanel).not.toBeVisible();
+
+  const smokeVideoPath = testInfo.outputPath('freecut-checkpoint.webm');
+  await createSmokeVideo(smokeVideoPath);
+  await page.getByTestId('media-import-input').setInputFiles(smokeVideoPath);
+  await page.waitForFunction(() => {
+    const video = document.querySelector('video');
+    return Boolean(video && Number.isFinite(video.duration) && video.duration > 0 && video.readyState >= 1);
+  });
+
+  await explorePanel.getByTestId('explore-square').click();
+  await expect(checkpointPanel).toContainText('Frame changed');
+  await expect(page.locator('.preset.active')).toContainText('1:1');
+  await page.locator('.stage-wrap').click();
+  await page.keyboard.press('u');
+  await expect(page.locator('.preset.active')).toContainText('16:9');
+  await expect(checkpointPanel).not.toBeVisible();
+
+  await explorePanel.getByTestId('explore-shorts-pop').click();
+  await expect(checkpointPanel).toContainText('Pop captions changed');
+  await expect(page.locator('.caption-card')).toHaveCount(1);
+  await expect(page.locator('.caption-style.active')).toContainText('Shorts Pop');
+  await checkpointPanel.getByTestId('checkpoint-restore').click();
+  await expect(page.locator('.caption-card')).toHaveCount(0);
+  await expect(page.locator('.caption-style.active')).toContainText('Clean');
+});

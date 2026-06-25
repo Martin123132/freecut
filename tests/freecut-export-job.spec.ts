@@ -116,7 +116,9 @@ test('export job progress reaches ready state', async ({ page }, testInfo) => {
   await expect(page.getByTestId('export-status')).toContainText('Export ready');
   await expect(page.getByTestId('export-status').getByRole('button', { name: /Download freecut-/ })).toBeVisible();
   await expect(page.getByTestId('export-status').getByRole('button', { name: /Download freecut-/ })).toContainText('Download MP4');
-  await page.getByRole('button', { name: 'Project settings' }).click();
+  await page.getByRole('button', { name: 'Open Export Center' }).click();
+  await expect(page.getByTestId('export-center')).toContainText('Current render');
+  await expect(page.getByTestId('export-center')).toContainText('Export history');
   await expect(page.getByTestId('export-history-list')).toContainText('Balanced');
   await expect(page.getByTestId('export-history-list')).toContainText('9:16');
   await expect(page.getByTestId('export-history-list')).toContainText('Shorts Pop');
@@ -124,11 +126,11 @@ test('export job progress reaches ready state', async ({ page }, testInfo) => {
   await expect(page.getByTestId('export-history-list')).toContainText('Ready now');
   await expect(page.getByTestId('export-history-list').getByRole('button', { name: /Download freecut-/ })).toBeVisible();
   await expect(page.getByTestId('export-history-list').getByRole('button', { name: /Render freecut-/ })).toBeVisible();
-  await page.getByRole('button', { name: 'Close settings' }).click();
+  await page.getByRole('button', { name: 'Close Export Center' }).click();
   await page.reload();
   await expect(page.getByTestId('recent-projects')).toContainText('freecut-export-smoke.webm');
   await expect(page.getByTestId('export-status')).toContainText('Reload media: freecut-export-smoke.webm');
-  await page.getByRole('button', { name: 'Project settings' }).click();
+  await page.getByRole('button', { name: 'Open Export Center' }).click();
   await expect(page.getByTestId('export-history-list')).toContainText('freecut-');
   await expect(page.getByTestId('export-history-list')).toContainText('Restore route');
   await page.getByTestId('export-history-list').getByRole('button', { name: /Restore route/ }).click();

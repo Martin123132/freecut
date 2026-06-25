@@ -16,9 +16,9 @@ Public demo page: https://martin123132.github.io/freecut/
 - Restore a saved project or recent local route with guided source-clip relink and preserved trim timing
 - Restore session checkpoints after exploratory frame, quality, and caption-style changes
 - Undo and redo edit changes from the toolbar or keyboard
-- Check export readiness with a guided ship preflight, render summary, dock render plan, and estimated output size
+- Check export readiness with a guided ship preflight, render summary, dock render plan, Export Center, and estimated output size
 - Choose Quick, Balanced, or Master export quality
-- Export MP4 through the local FFmpeg worker with no watermark, session downloads, render-again actions, and reload-safe export receipts that can restore the route
+- Export MP4 through the local FFmpeg worker with no watermark, session downloads, render-again actions, and reload-safe Export Center receipts that can restore the route
 - Use keyboard shortcuts (`I`, `Space`, `C`, `F`, `R`, `E`, `S`, `U`, `Ctrl+Z`, `Ctrl+Y`, `Q`, `Left/Right`) while editing and `?` / `Shift` + `K` for Mission Control.
 - Mission flow is intentionally guided: Import -> Frame -> (Optional) Captions -> Trim -> Export.
 

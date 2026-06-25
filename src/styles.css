@@ -2845,9 +2845,17 @@ button {
   transition: width 180ms ease;
 }
 
+.export-status-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  justify-content: center;
+}
+
 .status-cancel,
 .status-retry,
-.status-download {
+.status-download,
+.status-details {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -2873,6 +2881,12 @@ button {
   background: var(--warn);
 }
 
+.status-details {
+  color: var(--text);
+  background: var(--panel-strong);
+  border: 1px solid var(--line);
+}
+
 .settings-scrim {
   position: fixed;
   inset: 0;
@@ -2886,6 +2900,18 @@ button {
 .settings-panel {
   width: min(360px, 100%);
   height: 100%;
+  padding: 14px;
+  color: var(--text);
+  background: rgba(29, 27, 24, 0.98);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.export-center-panel {
+  width: min(460px, 100%);
+  height: 100%;
+  overflow: auto;
   padding: 14px;
   color: var(--text);
   background: rgba(29, 27, 24, 0.98);
@@ -2925,6 +2951,12 @@ button {
 }
 
 .settings-stack {
+  display: grid;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.export-center-stack {
   display: grid;
   gap: 14px;
   margin-top: 18px;
@@ -2976,6 +3008,93 @@ button {
   color: var(--muted);
   font-size: 12px;
   font-weight: 750;
+}
+
+.export-center-current {
+  display: grid;
+  gap: 10px;
+  padding: 10px;
+  background: rgba(10, 10, 9, 0.22);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.export-center-current.exporting {
+  border-color: rgba(233, 185, 73, 0.42);
+}
+
+.export-center-current.done {
+  border-color: rgba(142, 224, 95, 0.42);
+}
+
+.export-center-current.error {
+  border-color: rgba(255, 103, 86, 0.42);
+}
+
+.export-center-current-copy {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.export-center-current-copy span,
+.export-center-current-copy em {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 850;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.export-center-current-copy span {
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.export-center-current-copy strong {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 950;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.export-center-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.export-center-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 82px;
+  height: 32px;
+  padding: 0 10px;
+  color: var(--accent-ink);
+  background: var(--accent);
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 950;
+}
+
+.export-center-plan {
+  margin: 0;
+  overflow: hidden;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 850;
+  line-height: 1.45;
+  text-overflow: ellipsis;
 }
 
 .export-history-list {
@@ -3229,6 +3348,11 @@ button {
   }
 
   .settings-panel {
+    width: 100%;
+    border-radius: 0;
+  }
+
+  .export-center-panel {
     width: 100%;
     border-radius: 0;
   }

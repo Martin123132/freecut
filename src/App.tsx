@@ -9,6 +9,7 @@ import { MissionRail, MissionRailStep } from './components/MissionRail';
 import { ProjectPanel, type RecentProjectCard } from './components/ProjectPanel';
 import { PreflightItem } from './components/ExportPreflight';
 import { SettingsPanel } from './components/SettingsPanel';
+import { ExportCenter } from './components/ExportCenter';
 import { QuickStartPanel } from './components/QuickStartPanel';
 import { ShortcutHintStrip } from './components/ShortcutHintStrip';
 import { CommandAction, CommandPalette } from './components/CommandPalette';
@@ -136,6 +137,7 @@ function App() {
   const [recentProjects, setRecentProjects] = useState<RecentProjectEntry[]>([]);
   const [apiHealth, setApiHealth] = useState<ApiHealth | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [exportCenterOpen, setExportCenterOpen] = useState(false);
   const [showQuickStart, setShowQuickStart] = useState(false);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [projectStatus, setProjectStatus] = useState('Autosave ready');
@@ -144,6 +146,7 @@ function App() {
   const [editHistory, setEditHistory] = useState<EditHistoryState>({ redo: [], undo: [] });
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const settingsButtonRef = useRef<HTMLButtonElement | null>(null);
+  const exportCenterButtonRef = useRef<HTMLButtonElement | null>(null);
   const mediaInputRef = useRef<HTMLInputElement | null>(null);
   const projectInputRef = useRef<HTMLInputElement | null>(null);
   const projectHydratedRef = useRef(false);
@@ -218,7 +221,7 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (!settingsOpen || apiHealth) return;
+    if ((!settingsOpen && !exportCenterOpen) || apiHealth) return;
 
     let canceled = false;
     fetch('/api/health')
@@ -233,11 +236,16 @@ function App() {
     return () => {
       canceled = true;
     };
-  }, [apiHealth, settingsOpen]);
+  }, [apiHealth, exportCenterOpen, settingsOpen]);
 
   const closeSettings = useCallback(() => {
     setSettingsOpen(false);
     window.setTimeout(() => settingsButtonRef.current?.focus(), 0);
+  }, []);
+
+  const closeExportCenter = useCallback(() => {
+    setExportCenterOpen(false);
+    window.setTimeout(() => exportCenterButtonRef.current?.focus(), 0);
   }, []);
 
   const createEditableSnapshot = (): EditableSnapshot => ({
@@ -851,6 +859,7 @@ function App() {
     writeStoredProject(item.projectSnapshot);
     rememberProject(item.projectSnapshot);
     setSettingsOpen(false);
+    setExportCenterOpen(false);
     setProjectStatus('Export route restored');
     setExportState('idle');
     setExportProgress(0);
@@ -1055,6 +1064,7 @@ function App() {
     }
 
     setSettingsOpen(false);
+    setExportCenterOpen(false);
     void exportClip();
   };
 
@@ -1556,9 +1566,16 @@ function App() {
         disabled: !canPlayPause
       },
       {
+        id: 'export-center',
+        label: 'Open Export Center',
+        description: 'Review render progress and receipts',
+        onActivate: () => setExportCenterOpen(true),
+        disabled: false
+      },
+      {
         id: 'settings',
         label: 'Open settings',
-        description: 'Review export history and project state',
+        description: 'Review project state and local storage',
         keyHint: 'S',
         onActivate: () => setSettingsOpen(true),
         disabled: false
@@ -1959,37 +1976,68 @@ function App() {
               </div>
             ) : null}
             {exportState === 'exporting' ? (
-              <button className="status-cancel" type="button" onClick={cancelExport}>
-                Cancel
-              </button>
+              <div className="export-status-actions">
+                <button className="status-cancel" type="button" onClick={cancelExport}>
+                  Cancel
+                </button>
+                <button ref={exportCenterButtonRef} className="status-details" type="button" aria-label="Open Export Center" onClick={() => setExportCenterOpen(true)}>
+                  Center
+                </button>
+              </div>
             ) : exportState === 'error' && canExport ? (
-              <button className="status-retry" type="button" onClick={() => void exportClip()}>
-                Retry
-              </button>
-            ) : latestExport?.available ? (
-              <button className="status-download" type="button" aria-label={`Download ${latestExport.filename}`} title={`Download ${latestExport.filename}`} onClick={downloadLatestExport}>
-                Download MP4
-              </button>
-            ) : null}
+              <div className="export-status-actions">
+                <button className="status-retry" type="button" onClick={() => void exportClip()}>
+                  Retry
+                </button>
+                <button ref={exportCenterButtonRef} className="status-details" type="button" aria-label="Open Export Center" onClick={() => setExportCenterOpen(true)}>
+                  Center
+                </button>
+              </div>
+            ) : (
+              <div className="export-status-actions">
+                {latestExport?.available ? (
+                  <button className="status-download" type="button" aria-label={`Download ${latestExport.filename}`} title={`Download ${latestExport.filename}`} onClick={downloadLatestExport}>
+                    Download MP4
+                  </button>
+                ) : null}
+                <button ref={exportCenterButtonRef} className="status-details" type="button" aria-label="Open Export Center" onClick={() => setExportCenterOpen(true)}>
+                  Center
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </footer>
       {settingsOpen ? (
         <SettingsPanel
           apiDataRoot={apiHealth?.dataRoot ?? ''}
-          canExport={canExport}
-          currentProjectKey={exportProjectKey}
           exportLabel={exportProfile.label}
-          exportHistory={exportHistory}
           mediaName={file?.name ?? projectMediaName}
           presetLabel={preset.label}
           projectStatus={projectStatus}
           onClose={closeSettings}
+          onResetProject={resetProject}
+          onSaveProject={saveProjectFile}
+        />
+      ) : null}
+      {exportCenterOpen ? (
+        <ExportCenter
+          apiDataRoot={apiHealth?.dataRoot ?? ''}
+          canExport={canExport}
+          currentProjectKey={exportProjectKey}
+          exportHistory={exportHistory}
+          exportMessage={exportMessage}
+          exportProgress={exportProgress}
+          exportState={exportState}
+          renderPlanLabel={renderPlanLabel}
+          renderPlanStatus={renderPlanStatus}
+          onCancelExport={cancelExport}
+          onClose={closeExportCenter}
           onDownloadExport={downloadExportFromHistory}
           onRenderExport={renderExportFromHistory}
           onRestoreExportRoute={restoreExportRoute}
-          onResetProject={resetProject}
-          onSaveProject={saveProjectFile}
+          onRetryExport={() => void exportClip()}
+          onStartExport={() => void exportClip()}
         />
       ) : null}
       <CommandPalette actions={commandActions} open={showCommandPalette} onClose={closeCommandPalette} />

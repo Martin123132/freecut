@@ -47,17 +47,19 @@ test('mission control preserves guided action order', async ({ page }, testInfo)
   await expect(palette).toBeVisible();
 
   const commands = palette.locator('.command-item-action');
-  await expect(commands).toHaveCount(8);
+  await expect(commands).toHaveCount(9);
   await expect(commands.nth(0)).toContainText('Import clip');
   await expect(commands.nth(1)).toContainText('Set 9:16 frame');
   await expect(commands.nth(2)).toContainText('Add a caption cue');
   await expect(commands.nth(3)).toContainText('Reset trim');
   await expect(commands.nth(4)).toContainText('Export MP4');
   await expect(commands.nth(5)).toContainText('Play playback');
-  await expect(commands.nth(6)).toContainText('Open settings');
-  await expect(commands.nth(7)).toContainText('Open mission map');
+  await expect(commands.nth(6)).toContainText('Open Export Center');
+  await expect(commands.nth(7)).toContainText('Open settings');
+  await expect(commands.nth(8)).toContainText('Open mission map');
 
   await expect(commands.nth(0)).toContainText(/Relink .*to continue|Start your route with a local source/);
   await expect(commands.nth(1)).toContainText('Choose this first for short-form output');
   await expect(commands.nth(4)).toContainText(/Need a source and valid trim range|Run local render/);
+  await expect(commands.nth(6)).toContainText('Review render progress and receipts');
 });

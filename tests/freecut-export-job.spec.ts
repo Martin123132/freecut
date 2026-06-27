@@ -118,7 +118,10 @@ test('export job progress reaches ready state', async ({ page }, testInfo) => {
   await expect(page.getByTestId('export-status').getByRole('button', { name: /Download freecut-/ })).toContainText('Download MP4');
   await page.getByRole('button', { name: 'Open Export Center' }).click();
   await expect(page.getByTestId('export-center')).toContainText('Current render');
+  await expect(page.getByTestId('export-center')).toContainText('Source clip');
   await expect(page.getByTestId('export-center')).toContainText('Export history');
+  await expect(page.getByTestId('export-center-source')).toContainText('Linked');
+  await expect(page.getByTestId('export-center-source')).toContainText('freecut-export-smoke.webm');
   await expect(page.getByTestId('export-history-list')).toContainText('Balanced');
   await expect(page.getByTestId('export-history-list')).toContainText('9:16');
   await expect(page.getByTestId('export-history-list')).toContainText('Shorts Pop');
@@ -131,6 +134,10 @@ test('export job progress reaches ready state', async ({ page }, testInfo) => {
   await expect(page.getByTestId('recent-projects')).toContainText('freecut-export-smoke.webm');
   await expect(page.getByTestId('export-status')).toContainText('Reload media: freecut-export-smoke.webm');
   await page.getByRole('button', { name: 'Open Export Center' }).click();
+  await expect(page.getByTestId('export-center')).toContainText('Source needed');
+  await expect(page.getByTestId('export-center-source')).toContainText('Relink needed');
+  await expect(page.getByTestId('export-center-source')).toContainText('FreeCut does not store or upload the video');
+  await expect(page.getByTestId('export-center-source').getByRole('button', { name: 'Relink source' })).toBeVisible();
   await expect(page.getByTestId('export-history-list')).toContainText('freecut-');
   await expect(page.getByTestId('export-history-list')).toContainText('Restore route');
   await page.getByTestId('export-history-list').getByRole('button', { name: /Restore route/ }).click();

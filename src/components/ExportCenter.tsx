@@ -1,4 +1,4 @@
-import { Activity, Download, HardDrive, Play, RotateCcw, Route, X } from 'lucide-react';
+import { Activity, Download, HardDrive, Link2, Play, RotateCcw, Route, UploadCloud, X } from 'lucide-react';
 import { type KeyboardEvent, useEffect, useRef } from 'react';
 import type { SessionExport } from '../lib/exportHistory';
 import { bytesToSize, clamp } from '../lib/format';
@@ -13,11 +13,15 @@ type ExportCenterProps = {
   exportMessage: string;
   exportProgress: number;
   exportState: ExportState;
+  hasMedia: boolean;
+  mediaName: string | null;
+  needsMediaRelink: boolean;
   renderPlanLabel: string;
   renderPlanStatus: string;
   onCancelExport: () => void;
   onClose: () => void;
   onDownloadExport: (id: string) => void;
+  onRequestMedia: () => void;
   onRenderExport: (id: string) => void;
   onRestoreExportRoute: (id: string) => void;
   onRetryExport: () => void;
@@ -39,11 +43,15 @@ export function ExportCenter({
   exportMessage,
   exportProgress,
   exportState,
+  hasMedia,
+  mediaName,
+  needsMediaRelink,
   renderPlanLabel,
   renderPlanStatus,
   onCancelExport,
   onClose,
   onDownloadExport,
+  onRequestMedia,
   onRenderExport,
   onRestoreExportRoute,
   onRetryExport,
@@ -55,8 +63,9 @@ export function ExportCenter({
   const latestMatchesCurrent = Boolean(latestExport && latestExport.projectKey === currentProjectKey);
   const latestCanRenderAgain = Boolean(latestExport && latestMatchesCurrent && canExport);
   const latestCanRestore = Boolean(latestExport?.projectSnapshot && (!latestMatchesCurrent || !latestExport.available));
-  const currentStateLabel = getCurrentStateLabel(exportState, exportProgress, latestExport, latestMatchesCurrent, canExport);
-  const currentDetail = getCurrentDetail(exportState, exportMessage, latestExport, latestMatchesCurrent, canExport);
+  const sourceState = getSourceState(hasMedia, mediaName, needsMediaRelink);
+  const currentStateLabel = getCurrentStateLabel(exportState, exportProgress, latestExport, latestMatchesCurrent, canExport, needsMediaRelink);
+  const currentDetail = getCurrentDetail(exportState, exportMessage, latestExport, latestMatchesCurrent, canExport, mediaName, needsMediaRelink);
 
   useEffect(() => {
     closeButtonRef.current?.focus();
@@ -178,6 +187,26 @@ export function ExportCenter({
 
           <section className="settings-section">
             <div className="settings-section-title">
+              <Link2 size={15} />
+              <span>Source clip</span>
+            </div>
+            <div className={`export-center-source ${sourceState.tone}`} data-testid="export-center-source">
+              <div className="export-center-source-copy">
+                <span>{sourceState.label}</span>
+                <strong>{sourceState.title}</strong>
+                <em>{sourceState.detail}</em>
+              </div>
+              {!hasMedia ? (
+                <button type="button" onClick={onRequestMedia}>
+                  {needsMediaRelink ? <Link2 size={13} /> : <UploadCloud size={13} />}
+                  {needsMediaRelink ? 'Relink source' : 'Import source'}
+                </button>
+              ) : null}
+            </div>
+          </section>
+
+          <section className="settings-section">
+            <div className="settings-section-title">
               <Play size={15} />
               <span>Render plan</span>
             </div>
@@ -257,10 +286,12 @@ function getCurrentStateLabel(
   exportProgress: number,
   latestExport: SessionExport | null,
   latestMatchesCurrent: boolean,
-  canExport: boolean
+  canExport: boolean,
+  needsMediaRelink: boolean
 ) {
   if (exportState === 'exporting') return `Rendering ${Math.round(exportProgress)}%`;
   if (exportState === 'error') return 'Needs retry';
+  if (needsMediaRelink) return 'Source needed';
   if (latestExport?.available && latestMatchesCurrent) return 'Ready now';
   if (latestExport?.projectSnapshot && (!latestMatchesCurrent || !latestExport.available)) return 'Route saved';
   if (canExport) return 'Ready';
@@ -272,14 +303,44 @@ function getCurrentDetail(
   exportMessage: string,
   latestExport: SessionExport | null,
   latestMatchesCurrent: boolean,
-  canExport: boolean
+  canExport: boolean,
+  mediaName: string | null,
+  needsMediaRelink: boolean
 ) {
   if (exportState === 'exporting') return exportMessage || 'Rendering MP4';
   if (exportState === 'error') return exportMessage || 'Export failed';
+  if (needsMediaRelink) return `Relink ${mediaName ?? 'the source clip'} before rendering again`;
   if (exportMessage) return exportMessage;
   if (latestExport) {
     const status = latestMatchesCurrent ? 'Latest export' : 'Previous export';
     return `${status} - ${latestExport.filename}`;
   }
   return canExport ? 'Ready for local FFmpeg export' : 'Import media and set a valid range';
+}
+
+function getSourceState(hasMedia: boolean, mediaName: string | null, needsMediaRelink: boolean) {
+  if (hasMedia) {
+    return {
+      detail: 'Ready for local preview, trim, captions, and FFmpeg export.',
+      label: 'Linked',
+      title: mediaName ?? 'Source loaded',
+      tone: 'linked'
+    };
+  }
+
+  if (needsMediaRelink) {
+    return {
+      detail: 'Choose the original local file to reopen this route. FreeCut does not store or upload the video.',
+      label: 'Relink needed',
+      title: mediaName ?? 'Saved source clip',
+      tone: 'missing'
+    };
+  }
+
+  return {
+    detail: 'Start with a local video file. The clip stays on this machine.',
+    label: 'No source',
+    title: 'Import a clip',
+    tone: 'empty'
+  };
 }

@@ -2029,11 +2029,15 @@ function App() {
           exportMessage={exportMessage}
           exportProgress={exportProgress}
           exportState={exportState}
+          hasMedia={Boolean(file)}
+          mediaName={file?.name ?? projectMediaName}
+          needsMediaRelink={needsMediaRelink}
           renderPlanLabel={renderPlanLabel}
           renderPlanStatus={renderPlanStatus}
           onCancelExport={cancelExport}
           onClose={closeExportCenter}
           onDownloadExport={downloadExportFromHistory}
+          onRequestMedia={requestMedia}
           onRenderExport={renderExportFromHistory}
           onRestoreExportRoute={restoreExportRoute}
           onRetryExport={() => void exportClip()}

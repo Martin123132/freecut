@@ -22,6 +22,13 @@ Public demo page: https://martin123132.github.io/freecut/
 - Use keyboard shortcuts (`I`, `Space`, `C`, `F`, `R`, `E`, `S`, `U`, `Ctrl+Z`, `Ctrl+Y`, `Q`, `Left/Right`) while editing and `?` / `Shift` + `K` for Mission Control.
 - Mission flow is intentionally guided: Import -> Frame -> (Optional) Captions -> Trim -> Export.
 
+## Known limits
+
+- FreeCut edits one local source clip at a time.
+- Browser storage keeps project settings and export receipts, not the original video file.
+- Reloaded projects and receipts can restore the route, but you must relink the original local source clip before rendering again.
+- Export requires the local FreeCut API and FFmpeg worker; the GitHub Pages demo page does not collect uploads or run cloud conversion.
+
 ## License
 
 FreeCut is source-available software for personal and non-commercial use under the PolyForm Noncommercial License 1.0.0.

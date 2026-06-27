@@ -72,7 +72,14 @@ export function MediaPanel({ file, inputRef, projectMediaName, children, onRejec
           <span>Relink</span>
         </button>
       ) : (
-        <div className="empty-panel">No clip loaded</div>
+        <div className="media-empty-card" data-testid="media-empty-state">
+          <strong>No clip loaded</strong>
+          <span>Local video stays on this machine. Browser storage keeps the edit route, not the source file.</span>
+          <button type="button" onClick={onRequestMedia}>
+            <UploadCloud size={14} />
+            Import source
+          </button>
+        </div>
       )}
       {children}
     </aside>

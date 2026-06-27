@@ -1,4 +1,4 @@
-import { FolderOpen, Pause, Play, RotateCcw } from 'lucide-react';
+import { FolderOpen, Pause, Play, RotateCcw, UploadCloud } from 'lucide-react';
 import { RefObject } from 'react';
 import { CaptionCue } from '../lib/captions';
 import { CaptionStyle } from '../lib/captionStyles';
@@ -104,17 +104,25 @@ export function Stage({
               ) : null}
             </>
           ) : (
-            <div className={`stage-empty ${missingMediaName ? 'restore-needed' : ''}`}>
-              <span>{missingMediaName ? 'Source needed' : 'Load a video'}</span>
+            <div className={`stage-empty ${missingMediaName ? 'restore-needed' : ''}`} data-testid="stage-empty">
+              <span>{missingMediaName ? 'Source needed' : 'Ready for local video'}</span>
               {missingMediaName ? (
                 <>
                   <strong>{missingMediaName}</strong>
-                  <button className="stage-empty-action" type="button" onClick={onRequestMedia}>
+                  <button className="stage-empty-action" type="button" data-testid="stage-relink-action" onClick={onRequestMedia}>
                     <FolderOpen size={14} />
                     Relink clip
                   </button>
                 </>
-              ) : null}
+              ) : (
+                <>
+                  <strong>No clip loaded</strong>
+                  <button className="stage-empty-action" type="button" data-testid="stage-import-action" onClick={onRequestMedia}>
+                    <UploadCloud size={14} />
+                    Import source
+                  </button>
+                </>
+              )}
             </div>
           )}
         </div>

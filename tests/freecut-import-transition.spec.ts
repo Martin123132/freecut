@@ -21,7 +21,9 @@ test('imported clip metadata unlocks FreeCut dock readiness', async ({ page }, t
   await page.goto('/', { waitUntil: 'domcontentloaded' });
 
   await expect(page).toHaveTitle('FreeCut');
-  await expect(page.getByText('Load a video')).toBeVisible();
+  await expect(page.getByTestId('stage-empty')).toContainText('Ready for local video');
+  await expect(page.getByTestId('stage-import-action')).toBeVisible();
+  await expect(page.getByTestId('media-empty-state')).toContainText('Local video stays on this machine');
   await expect(page.getByTestId('dock-readiness')).toHaveAttribute('aria-label', 'Project readiness: 2/5 ready');
   await expect(page.getByTestId('next-move')).toContainText('Bring in a clip');
   await expect(page.getByTestId('timeline-clip-block')).toContainText('No source');
@@ -102,5 +104,22 @@ test('unsupported media import explains the recovery path', async ({ page }, tes
 
   await expect(page.getByTestId('export-status')).toContainText('Unsupported file - choose a video file to import');
   await expect(page.getByTestId('export-status')).toContainText('not-a-video.txt was not loaded');
-  await expect(page.getByText('No clip loaded')).toBeVisible();
+  await expect(page.getByTestId('media-empty-state')).toContainText('No clip loaded');
+  await expect(page.getByTestId('stage-empty')).toContainText('No clip loaded');
+});
+
+test('first-run mobile view leads with canvas import path', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+
+  await expect(page.getByTestId('stage-empty')).toContainText('Ready for local video');
+  await expect(page.getByTestId('stage-import-action')).toBeVisible();
+  await expect(page.getByTestId('media-empty-state')).toContainText('Browser storage keeps the edit route');
+
+  const stageBox = await page.locator('.stage-wrap').boundingBox();
+  const mediaBox = await page.locator('.media-panel').boundingBox();
+  expect(stageBox).not.toBeNull();
+  expect(mediaBox).not.toBeNull();
+  if (!stageBox || !mediaBox) throw new Error('Stage or media panel was not measurable.');
+  expect(stageBox.y).toBeLessThan(mediaBox.y);
 });

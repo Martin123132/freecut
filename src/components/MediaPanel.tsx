@@ -7,14 +7,17 @@ type MediaPanelProps = {
   inputRef: RefObject<HTMLInputElement | null>;
   projectMediaName: string | null;
   children?: ReactNode;
+  onRejectFile: (file: File) => void;
   onSelectFile: (file: File) => void;
   onRequestMedia: () => void;
 };
 
-export function MediaPanel({ file, inputRef, projectMediaName, children, onSelectFile, onRequestMedia }: MediaPanelProps) {
+export function MediaPanel({ file, inputRef, projectMediaName, children, onRejectFile, onSelectFile, onRequestMedia }: MediaPanelProps) {
   const acceptFile = (candidate: File | undefined) => {
     if (candidate && candidate.type.startsWith('video/')) {
       onSelectFile(candidate);
+    } else if (candidate) {
+      onRejectFile(candidate);
     }
   };
 

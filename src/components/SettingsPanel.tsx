@@ -65,7 +65,8 @@ export function SettingsPanel({
       <aside
         ref={panelRef}
         className="settings-panel"
-        aria-label="Project settings"
+        aria-describedby="settings-description"
+        aria-labelledby="settings-title"
         aria-modal="true"
         role="dialog"
         tabIndex={-1}
@@ -81,6 +82,12 @@ export function SettingsPanel({
             <X size={15} />
           </button>
         </div>
+        <h2 id="settings-title" className="sr-only">
+          Project settings
+        </h2>
+        <p id="settings-description" className="sr-only">
+          Review local project state, storage, and project file actions.
+        </p>
 
         <div className="settings-stack">
           <section className="settings-section">

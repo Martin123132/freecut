@@ -163,6 +163,7 @@ test('export failures offer retry without losing the clip', async ({ page }, tes
 
   await page.getByTestId('next-move').click();
   await expect(page.getByTestId('export-status')).toContainText('Export failed - FFmpeg could not render this clip');
+  await expect(page.getByTestId('export-status')).toContainText('Retry keeps the clip loaded');
   await expect(page.getByRole('button', { name: 'Retry' })).toBeVisible();
   await expect(page.getByTestId('media-clip-name')).toHaveText('freecut-export-smoke.webm');
 });

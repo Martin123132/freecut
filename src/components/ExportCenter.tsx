@@ -107,7 +107,8 @@ export function ExportCenter({
       <aside
         ref={panelRef}
         className="export-center-panel"
-        aria-label="Export Center"
+        aria-describedby="export-center-description"
+        aria-labelledby="export-center-title"
         aria-modal="true"
         role="dialog"
         tabIndex={-1}
@@ -123,6 +124,12 @@ export function ExportCenter({
             <X size={15} />
           </button>
         </div>
+        <h2 id="export-center-title" className="sr-only">
+          Export Center
+        </h2>
+        <p id="export-center-description" className="sr-only">
+          Review local render progress, source clip status, storage location, and recent export receipts.
+        </p>
 
         <div className="export-center-stack" data-testid="export-center">
           <section className="settings-section">
@@ -130,7 +137,7 @@ export function ExportCenter({
               <Activity size={15} />
               <span>Current render</span>
             </div>
-            <div className={`export-center-current ${exportState}`}>
+            <div className={`export-center-current ${exportState}`} aria-atomic="true" aria-live="polite" role="status">
               <div className="export-center-current-copy">
                 <span>{currentStateLabel}</span>
                 <strong>{currentDetail}</strong>
@@ -190,7 +197,7 @@ export function ExportCenter({
               <Link2 size={15} />
               <span>Source clip</span>
             </div>
-            <div className={`export-center-source ${sourceState.tone}`} data-testid="export-center-source">
+            <div className={`export-center-source ${sourceState.tone}`} aria-atomic="true" aria-live="polite" data-testid="export-center-source">
               <div className="export-center-source-copy">
                 <span>{sourceState.label}</span>
                 <strong>{sourceState.title}</strong>
@@ -290,7 +297,7 @@ function getCurrentStateLabel(
   needsMediaRelink: boolean
 ) {
   if (exportState === 'exporting') return `Rendering ${Math.round(exportProgress)}%`;
-  if (exportState === 'error') return 'Needs retry';
+  if (exportState === 'error') return canExport ? 'Needs retry' : 'Needs attention';
   if (needsMediaRelink) return 'Source needed';
   if (latestExport?.available && latestMatchesCurrent) return 'Ready now';
   if (latestExport?.projectSnapshot && (!latestMatchesCurrent || !latestExport.available)) return 'Route saved';

@@ -464,6 +464,13 @@ function App() {
     }
   };
 
+  const handleRejectMediaFile = (rejectedFile: File) => {
+    setProjectStatus('Import failed');
+    setExportState('error');
+    setExportProgress(0);
+    setExportMessage(`Unsupported file - choose a video file to import. ${rejectedFile.name} was not loaded.`);
+  };
+
   const handleLoadedMetadata = () => {
     const nextDuration = videoRef.current?.duration ?? 0;
     const pendingRange = pendingProjectRangeRef.current;
@@ -977,7 +984,7 @@ function App() {
       } else {
         const message = error instanceof Error ? error.message : 'Export failed';
         setExportState('error');
-        setExportMessage(message.startsWith('Export') ? message : `Export failed - ${message}`);
+        setExportMessage(formatExportError(message));
       }
     } finally {
       exportInFlightRef.current = false;
@@ -1010,6 +1017,11 @@ function App() {
     if (job.status === 'complete') return 'Export ready';
     if (job.status === 'canceled') return 'Export canceled';
     return job.error ? `Export failed - ${job.error}` : 'Export failed';
+  };
+
+  const formatExportError = (message: string) => {
+    const normalized = message.startsWith('Export') ? message : `Export failed - ${message}`;
+    return `${normalized}. Retry keeps the clip loaded.`;
   };
 
   const cancelExport = () => {
@@ -1810,6 +1822,7 @@ function App() {
           file={file}
           inputRef={mediaInputRef}
           projectMediaName={projectMediaName}
+          onRejectFile={handleRejectMediaFile}
           onSelectFile={handleSelectFile}
           onRequestMedia={requestMedia}
         >

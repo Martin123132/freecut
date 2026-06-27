@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { writeFile } from 'node:fs/promises';
 import { createSmokeVideo } from './support/createSmokeVideo';
 
 test('imported clip metadata unlocks FreeCut dock readiness', async ({ page }, testInfo) => {
@@ -90,4 +91,16 @@ test('imported clip metadata unlocks FreeCut dock readiness', async ({ page }, t
 
   expect(pageErrors).toEqual([]);
   expect(consoleErrors).toEqual([]);
+});
+
+test('unsupported media import explains the recovery path', async ({ page }, testInfo) => {
+  const textFilePath = testInfo.outputPath('not-a-video.txt');
+  await writeFile(textFilePath, 'This is not a video file.');
+
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await page.getByTestId('media-import-input').setInputFiles(textFilePath);
+
+  await expect(page.getByTestId('export-status')).toContainText('Unsupported file - choose a video file to import');
+  await expect(page.getByTestId('export-status')).toContainText('not-a-video.txt was not loaded');
+  await expect(page.getByText('No clip loaded')).toBeVisible();
 });

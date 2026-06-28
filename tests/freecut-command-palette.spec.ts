@@ -1,5 +1,10 @@
 import { expect, test } from '@playwright/test';
 import { createSmokeVideo } from './support/createSmokeVideo';
+import { mockHealthyRuntime } from './support/mockRuntimeHealth';
+
+test.beforeEach(async ({ page }) => {
+  await mockHealthyRuntime(page);
+});
 
 test('command palette opens from keyboard and adds a caption', async ({ page }, testInfo) => {
   const smokeVideoPath = testInfo.outputPath('freecut-command-palette-smoke.webm');

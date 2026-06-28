@@ -36,4 +36,4 @@ jobs:
       - name: Import and export smoke
         env:
           FREECUT_FFMPEG_PATH: ffmpeg
-        run: npx playwright test tests/project-schema.spec.ts tests/freecut-import-transition.spec.ts tests/freecut-export-job.spec.ts tests/freecut-export-output.spec.ts
+        run: npx playwright test tests/project-schema.spec.ts tests/freecut-runtime.spec.ts tests/freecut-import-transition.spec.ts tests/freecut-export-job.spec.ts tests/freecut-export-output.spec.ts

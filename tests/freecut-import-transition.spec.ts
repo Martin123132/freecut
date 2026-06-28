@@ -1,6 +1,11 @@
 import { expect, test } from '@playwright/test';
 import { writeFile } from 'node:fs/promises';
 import { createSmokeVideo } from './support/createSmokeVideo';
+import { mockHealthyRuntime } from './support/mockRuntimeHealth';
+
+test.beforeEach(async ({ page }) => {
+  await mockHealthyRuntime(page);
+});
 
 test('imported clip metadata unlocks FreeCut dock readiness', async ({ page }, testInfo) => {
   const consoleErrors: string[] = [];
@@ -17,7 +22,6 @@ test('imported clip metadata unlocks FreeCut dock readiness', async ({ page }, t
   page.on('pageerror', (error) => {
     pageErrors.push(error.message);
   });
-
   await page.goto('/', { waitUntil: 'domcontentloaded' });
 
   await expect(page).toHaveTitle('FreeCut');

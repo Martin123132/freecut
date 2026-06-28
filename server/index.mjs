@@ -14,6 +14,8 @@ const projectRoot = path.resolve(__dirname, '..');
 const dataRoot = process.env.FREECUT_DATA_DIR || path.join(projectRoot, 'data');
 const uploadDir = path.join(dataRoot, 'uploads');
 const exportDir = path.join(dataRoot, 'exports');
+const webRoot = process.env.FREECUT_WEB_ROOT ? path.resolve(process.env.FREECUT_WEB_ROOT) : path.join(projectRoot, 'dist');
+const webIndexPath = path.join(webRoot, 'index.html');
 const port = Number(process.env.PORT || 5174);
 const ffmpegPath = process.env.FREECUT_FFMPEG_PATH || ffmpegStaticPath;
 const exportJobs = new Map();
@@ -79,6 +81,7 @@ function assertDDrive(targetPath) {
 
 assertDDrive(projectRoot);
 assertDDrive(dataRoot);
+assertDDrive(webRoot);
 await fsp.mkdir(uploadDir, { recursive: true });
 await fsp.mkdir(exportDir, { recursive: true });
 
@@ -107,10 +110,19 @@ const upload = multer({
 });
 
 app.get('/api/health', (_request, response) => {
+  const webAvailable = fs.existsSync(webIndexPath);
+
   response.json({
+    checks: {
+      api: true,
+      ffmpeg: Boolean(ffmpegPath),
+      storage: true,
+      web: webAvailable
+    },
     ok: true,
     ffmpeg: ffmpegPath,
-    dataRoot
+    dataRoot,
+    webRoot: webAvailable ? webRoot : null
   });
 });
 
@@ -283,9 +295,26 @@ app.get('/api/export/jobs/:id/download', (request, response) => {
   });
 });
 
+if (fs.existsSync(webIndexPath)) {
+  app.use(express.static(webRoot));
+  app.use((request, response, next) => {
+    if (request.method !== 'GET' || request.path.startsWith('/api/')) {
+      next();
+      return;
+    }
+
+    response.sendFile(webIndexPath);
+  });
+}
+
 app.listen(port, '127.0.0.1', () => {
   console.log(`FreeCut API listening at http://127.0.0.1:${port}`);
   console.log(`Data root: ${dataRoot}`);
+  if (fs.existsSync(webIndexPath)) {
+    console.log(`FreeCut web listening at http://127.0.0.1:${port}`);
+  } else {
+    console.log('FreeCut web build not found. Run npm run build to serve the production UI from this server.');
+  }
 });
 
 function createExportPlan(body, inputPath) {

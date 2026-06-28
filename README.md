@@ -55,6 +55,14 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\dev-env.ps1 npm.cm
 
 The API listens on `127.0.0.1:5174`; Vite listens on `127.0.0.1:5173`.
 
+For a production-style local run, build the app and serve the UI plus API from the FreeCut server:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\start-freecut.ps1
+```
+
+That command keeps the D-drive environment active, runs `npm run build`, then starts FreeCut at `http://127.0.0.1:5174`. Use `-SkipBuild` after an unchanged build. The in-app Runtime preflight reports local API, FFmpeg, storage, and built web status.
+
 FreeCut uses `ffmpeg-static` by default. On Linux machines where that binary lacks caption filters such as `drawtext`, install system FFmpeg and set `FREECUT_FFMPEG_PATH=ffmpeg` before running the API or smoke tests.
 
 ## QA

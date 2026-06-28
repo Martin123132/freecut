@@ -1,5 +1,10 @@
 import { expect, test } from '@playwright/test';
 import { createSmokeVideo } from './support/createSmokeVideo';
+import { mockHealthyRuntime } from './support/mockRuntimeHealth';
+
+test.beforeEach(async ({ page }) => {
+  await mockHealthyRuntime(page);
+});
 
 test('mission path updates as workflow unlocks', async ({ page }, testInfo) => {
   await page.goto('/', { waitUntil: 'domcontentloaded' });

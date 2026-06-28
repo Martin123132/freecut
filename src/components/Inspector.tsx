@@ -8,6 +8,7 @@ import { CaptionsPanel } from './CaptionsPanel';
 import { ExportPreflight, PreflightItem } from './ExportPreflight';
 import { ExportReadinessPanel } from './ExportReadinessPanel';
 import { OutputPanel } from './OutputPanel';
+import { RuntimeHealth, RuntimeStatusPanel } from './RuntimeStatusPanel';
 
 type InspectorProps = {
   preset: AspectPreset;
@@ -21,6 +22,7 @@ type InspectorProps = {
   currentTime: number;
   duration: number;
   isExporting: boolean;
+  runtimeHealth: RuntimeHealth | null;
   overlayText: string;
   overlayX: number;
   overlayY: number;
@@ -54,6 +56,7 @@ export function Inspector({
   currentTime,
   duration,
   isExporting,
+  runtimeHealth,
   overlayText,
   overlayX,
   overlayY,
@@ -87,6 +90,8 @@ export function Inspector({
         primaryDisabled={preflightPrimaryDisabled}
         onPrimaryAction={onPreflightPrimaryAction}
       />
+
+      <RuntimeStatusPanel health={runtimeHealth} />
 
       <OutputPanel profile={exportProfile} onProfileChange={onExportProfileChange} />
 

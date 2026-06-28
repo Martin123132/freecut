@@ -1,5 +1,10 @@
 import { expect, Page, TestInfo, test } from '@playwright/test';
 import { createSmokeVideo } from './support/createSmokeVideo';
+import { mockHealthyRuntime } from './support/mockRuntimeHealth';
+
+test.beforeEach(async ({ page }) => {
+  await mockHealthyRuntime(page);
+});
 
 async function importSmokeClip(page: Page, testInfo: TestInfo) {
   const smokeVideoPath = testInfo.outputPath('freecut-shortcuts-smoke.webm');

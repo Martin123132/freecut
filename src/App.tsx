@@ -11,6 +11,7 @@ import { PreflightItem } from './components/ExportPreflight';
 import { SettingsPanel } from './components/SettingsPanel';
 import { ExportCenter } from './components/ExportCenter';
 import { QuickStartPanel } from './components/QuickStartPanel';
+import { type RuntimeHealth } from './components/RuntimeStatusPanel';
 import { ShortcutHintStrip } from './components/ShortcutHintStrip';
 import { CommandAction, CommandPalette } from './components/CommandPalette';
 import { ExploreAction, ExplorePanel } from './components/ExplorePanel';
@@ -49,10 +50,7 @@ type ExportJobStatus = {
   status: 'queued' | 'running' | 'complete' | 'error' | 'canceled';
   updatedAt?: number;
 };
-type ApiHealth = {
-  dataRoot?: string;
-  ok?: boolean;
-};
+type ApiHealth = RuntimeHealth;
 type CheckpointSnapshot = {
   captionStyleId: string;
   captions: CaptionCue[];
@@ -221,11 +219,9 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if ((!settingsOpen && !exportCenterOpen) || apiHealth) return;
-
     let canceled = false;
     fetch('/api/health')
-      .then((response) => (response.ok ? response.json() : null))
+      .then((response) => (response.ok ? response.json() : { ok: false }))
       .then((health: ApiHealth | null) => {
         if (!canceled) setApiHealth(health);
       })
@@ -236,7 +232,7 @@ function App() {
     return () => {
       canceled = true;
     };
-  }, [apiHealth, exportCenterOpen, settingsOpen]);
+  }, []);
 
   const closeSettings = useCallback(() => {
     setSettingsOpen(false);
@@ -1899,6 +1895,7 @@ function App() {
           currentTime={currentTime}
           duration={duration}
           isExporting={exportState === 'exporting'}
+          runtimeHealth={apiHealth}
           preflightItems={preflightItems}
           preflightPrimaryLabel={preflightPrimaryLabel}
           preflightPrimaryDisabled={preflightPrimaryDisabled}

@@ -1,5 +1,10 @@
 import { expect, Page, test, TestInfo } from '@playwright/test';
 import { createSmokeVideo } from './support/createSmokeVideo';
+import { mockHealthyRuntime } from './support/mockRuntimeHealth';
+
+test.beforeEach(async ({ page }) => {
+  await mockHealthyRuntime(page);
+});
 
 async function importSmokeClip(page: Page, testInfo: TestInfo) {
   const smokeVideoPath = testInfo.outputPath('freecut-export-smoke.webm');
@@ -82,17 +87,6 @@ test('export job progress reaches ready state', async ({ page }, testInfo) => {
         'content-disposition': 'attachment; filename="freecut-export.mp4"'
       },
       status: 200
-    });
-  });
-
-  await page.route('**/api/health', async (route) => {
-    await route.fulfill({
-      contentType: 'application/json',
-      status: 200,
-      body: JSON.stringify({
-        dataRoot: 'FreeCut smoke API',
-        ok: true
-      })
     });
   });
 

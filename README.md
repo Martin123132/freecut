@@ -49,7 +49,7 @@ Clone example on D:
 git clone https://github.com/Martin123132/freecut.git D:\codex-projects\freecut
 cd D:\codex-projects\freecut
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\dev-env.ps1 npm.cmd run doctor
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\dev-env.ps1 npm.cmd install
+powershell -NoProfile -ExecutionPolicy Bypass -File .\Setup-FreeCut.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\dev-env.ps1 npm.cmd run dev
 ```
 
@@ -93,4 +93,10 @@ Prepare a source release zip on D with:
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\dev-env.ps1 npm.cmd run package:release
 ```
 
-The package script builds the production UI, runs the runtime smoke unless `-SkipSmoke` is passed directly to `scripts\package-release.ps1`, stages the release under `D:\codex-tmp`, and writes the zip to `D:\codex-releases\freecut`.
+The package script builds the production UI, runs the runtime smoke unless `-SkipSmoke` is passed directly to `scripts\package-release.ps1`, verifies the zip unless `-SkipVerify` is passed, stages the release under `D:\codex-tmp`, and writes the zip to `D:\codex-releases\freecut`.
+
+It also writes a `.sha256` checksum beside the zip and embeds `RELEASE-MANIFEST.json` in the package. Verify a generated zip with:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\verify-release-package.ps1 -PackagePath D:\codex-releases\freecut\<zip-name>.zip
+```

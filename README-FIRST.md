@@ -7,6 +7,12 @@ FreeCut is a local-first video editor. Your source clips stay on this machine, a
 Keep the FreeCut folder on the D drive, then run:
 
 ```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\Setup-FreeCut.ps1
+```
+
+Then start FreeCut:
+
+```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\Start-FreeCut.ps1
 ```
 
@@ -18,13 +24,15 @@ http://127.0.0.1:5174
 
 ## If Dependencies Are Missing
 
-Run this once from the FreeCut folder:
+Run setup again from the FreeCut folder:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\dev-env.ps1 npm.cmd install
+powershell -NoProfile -ExecutionPolicy Bypass -File .\Setup-FreeCut.ps1
 ```
 
 Then start FreeCut again with `.\Start-FreeCut.ps1`.
+
+To reinstall dependencies from scratch, run setup with `-ForceInstall`.
 
 ## What To Expect
 

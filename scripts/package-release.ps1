@@ -1,7 +1,8 @@
 [CmdletBinding()]
 param(
   [string]$OutputRoot = 'D:\codex-releases\freecut',
-  [switch]$SkipSmoke
+  [switch]$SkipSmoke,
+  [switch]$SkipVerify
 )
 
 $ErrorActionPreference = 'Stop'
@@ -25,6 +26,7 @@ try {
   $packageName = "freecut-v$version-source-$stamp"
   $stagingRoot = Join-Path 'D:\codex-tmp\freecut-release' $packageName
   $zipPath = Join-Path $OutputRoot "$packageName.zip"
+  $checksumPath = "$zipPath.sha256"
 
   Remove-Item -LiteralPath $stagingRoot -Recurse -Force -ErrorAction SilentlyContinue
   New-Item -ItemType Directory -Force -Path $stagingRoot | Out-Null
@@ -57,6 +59,7 @@ try {
     'README-FIRST.md',
     'README.md',
     'SECURITY.md',
+    'Setup-FreeCut.ps1',
     'Start-FreeCut.ps1',
     'tsconfig.json',
     'tsconfig.node.json',
@@ -72,9 +75,52 @@ try {
     Copy-Item -LiteralPath $source -Destination $destination -Recurse -Force
   }
 
+  $commit = (& git rev-parse --short=12 HEAD 2>$null)
+  if (-not $commit) { $commit = 'unknown' }
+
+  $manifest = [ordered]@{
+    name = 'FreeCut'
+    version = $version
+    package = $packageName
+    commit = $commit
+    createdAt = (Get-Date).ToUniversalTime().ToString('o')
+    license = 'PolyForm-Noncommercial-1.0.0'
+    privacy = 'Local-first: source clips stay on the user machine; FreeCut does not collect uploads.'
+    startCommand = 'powershell -NoProfile -ExecutionPolicy Bypass -File .\Start-FreeCut.ps1'
+    setupCommand = 'powershell -NoProfile -ExecutionPolicy Bypass -File .\Setup-FreeCut.ps1'
+    verifyCommand = 'powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\verify-release-package.ps1 -PackagePath <zip>'
+    includes = @(
+      'production web build',
+      'local API server',
+      'Windows setup/start scripts',
+      'project documentation',
+      'tests and source'
+    )
+    excludes = @(
+      'node_modules',
+      '.env files',
+      'uploaded media',
+      'exported media'
+    )
+  }
+
+  $manifest | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $stagingRoot 'RELEASE-MANIFEST.json') -Encoding UTF8
+
   Compress-Archive -Path (Join-Path $stagingRoot '*') -DestinationPath $zipPath -Force
+  $hash = (Get-FileHash -Algorithm SHA256 -LiteralPath $zipPath).Hash.ToLowerInvariant()
+  "$hash  $([System.IO.Path]::GetFileName($zipPath))" | Set-Content -LiteralPath $checksumPath -Encoding ASCII
+
   Write-Host "FreeCut release package created:"
   Write-Host $zipPath
+  Write-Host "SHA256:"
+  Write-Host $checksumPath
+
+  if (-not $SkipVerify) {
+    Write-Host ''
+    Write-Host 'Verifying release package...'
+    & .\scripts\verify-release-package.ps1 -PackagePath $zipPath
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+  }
 } finally {
   Pop-Location
 }

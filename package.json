@@ -11,11 +11,13 @@
     "build": "tsc && vite build",
     "start": "node server/index.mjs",
     "start:build": "npm run build && npm run start",
+    "setup": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/setup-freecut.ps1",
     "doctor": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/doctor.ps1",
     "qa:import-transition": "npm run build && playwright test tests/freecut-import-transition.spec.ts",
     "qa:runtime": "npm run build && playwright test tests/freecut-runtime.spec.ts",
     "qa:smoke": "npm run build && playwright test tests/project-schema.spec.ts tests/freecut-runtime.spec.ts tests/freecut-import-transition.spec.ts tests/freecut-shortcuts.spec.ts tests/freecut-command-palette.spec.ts tests/freecut-guided.spec.ts tests/freecut-export-job.spec.ts tests/freecut-export-output.spec.ts",
     "package:release": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/package-release.ps1",
+    "package:verify": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify-release-package.ps1",
     "preview": "vite preview --host 127.0.0.1"
   },
   "dependencies": {

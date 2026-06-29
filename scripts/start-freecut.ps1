@@ -43,7 +43,7 @@ if (-not $nodeCommand -or -not $npmCommand) {
 
 $nodeModulesPath = Join-Path $projectRoot 'node_modules'
 if (-not (Test-Path -LiteralPath $nodeModulesPath)) {
-  Stop-FreeCutStart 'Dependencies are not installed yet.' 'Run: powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\dev-env.ps1 npm.cmd install'
+  Stop-FreeCutStart 'Dependencies are not installed yet.' 'Run: powershell -NoProfile -ExecutionPolicy Bypass -File .\Setup-FreeCut.ps1'
 }
 
 $existingPort = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1

@@ -1758,6 +1758,24 @@ button {
   white-space: nowrap;
 }
 
+.stage-route {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  max-width: min(82%, 520px);
+}
+
+.stage-route span {
+  padding: 4px 7px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 900;
+}
+
 .stage-empty-action {
   display: inline-flex;
   align-items: center;

@@ -117,6 +117,13 @@ export function Stage({
               ) : (
                 <>
                   <strong>No clip loaded</strong>
+                  <div className="stage-route" aria-label="Local edit route">
+                    <span>Import</span>
+                    <span>Trim</span>
+                    <span>Frame</span>
+                    <span>Captions</span>
+                    <span>Export</span>
+                  </div>
                   <button className="stage-empty-action" type="button" data-testid="stage-import-action" onClick={onRequestMedia}>
                     <UploadCloud size={14} />
                     Import source

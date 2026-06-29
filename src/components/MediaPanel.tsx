@@ -74,7 +74,7 @@ export function MediaPanel({ file, inputRef, projectMediaName, children, onRejec
       ) : (
         <div className="media-empty-card" data-testid="media-empty-state">
           <strong>No clip loaded</strong>
-          <span>Local video stays on this machine. Browser storage keeps the edit route, not the source file.</span>
+          <span>Local video stays on this machine. Browser storage keeps only the edit route, not the source file.</span>
           <button type="button" onClick={onRequestMedia}>
             <UploadCloud size={14} />
             Import source

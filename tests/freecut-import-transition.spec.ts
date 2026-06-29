@@ -28,7 +28,7 @@ test('imported clip metadata unlocks FreeCut dock readiness', async ({ page }, t
   await expect(page.getByTestId('stage-empty')).toContainText('Ready for local video');
   await expect(page.getByTestId('stage-import-action')).toBeVisible();
   await expect(page.getByTestId('media-empty-state')).toContainText('Local video stays on this machine');
-  await expect(page.getByTestId('dock-readiness')).toHaveAttribute('aria-label', 'Project readiness: 2/5 ready');
+  await expect(page.getByTestId('dock-readiness')).toHaveAttribute('aria-label', 'Project readiness: 3/6 ready');
   await expect(page.getByTestId('next-move')).toContainText('Bring in a clip');
   await expect(page.getByTestId('timeline-clip-block')).toContainText('No source');
 
@@ -44,7 +44,7 @@ test('imported clip metadata unlocks FreeCut dock readiness', async ({ page }, t
 
   await expect(page.getByTestId('preflight-row-source')).toContainText('Loaded');
   await expect(page.getByTestId('preflight-row-range')).not.toContainText('Waiting');
-  await expect(page.getByTestId('dock-readiness')).toHaveAttribute('aria-label', 'Project readiness: 4/5 ready');
+  await expect(page.getByTestId('dock-readiness')).toHaveAttribute('aria-label', 'Project readiness: 5/6 ready');
   await expect(page.getByTestId('next-move')).toContainText('Ship the cut');
   await expect(page.getByTestId('next-move')).toContainText('Export');
   await expect(page.getByTestId('next-move')).toBeEnabled();
@@ -118,7 +118,7 @@ test('first-run mobile view leads with canvas import path', async ({ page }) => 
 
   await expect(page.getByTestId('stage-empty')).toContainText('Ready for local video');
   await expect(page.getByTestId('stage-import-action')).toBeVisible();
-  await expect(page.getByTestId('media-empty-state')).toContainText('Browser storage keeps the edit route');
+  await expect(page.getByTestId('media-empty-state')).toContainText('Browser storage keeps only the edit route');
 
   const stageBox = await page.locator('.stage-wrap').boundingBox();
   const mediaBox = await page.locator('.media-panel').boundingBox();

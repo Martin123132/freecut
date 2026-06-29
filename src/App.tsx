@@ -325,7 +325,16 @@ function App() {
     applyEditableSnapshot(next, 'Redo applied');
   };
 
-  const canExport = useMemo(() => Boolean(file && trimEnd > trimStart), [file, trimEnd, trimStart]);
+  const clipReadyForExport = useMemo(() => Boolean(file && trimEnd > trimStart), [file, trimEnd, trimStart]);
+  const runtimeReady = useMemo(() => {
+    if (!apiHealth?.ok) return false;
+    const checks = apiHealth.checks;
+    if (checks) return Boolean(checks.api && checks.ffmpeg && checks.storage);
+    return Boolean(apiHealth.ffmpeg && apiHealth.dataRoot);
+  }, [apiHealth]);
+  const canExport = clipReadyForExport && runtimeReady;
+  const runtimePreflightValue = apiHealth === null ? 'Checking worker' : runtimeReady ? 'Local FFmpeg' : apiHealth?.ok ? 'Runtime incomplete' : 'Start FreeCut';
+  const runtimePreflightState: PreflightItem['state'] = runtimeReady ? 'ready' : apiHealth === null ? 'active' : 'blocked';
   const activeCaptions = useMemo(
     () => captions.filter((caption) => currentTime >= caption.start && currentTime <= caption.end),
     [captions, currentTime]
@@ -334,7 +343,7 @@ function App() {
   const hasCaptionWork = captions.length > 0 || hasCustomOverlayText;
   const quickStartProgress = [Boolean(file), preset.id === 'vertical', hasCaptionWork, canExport].filter(Boolean).length;
   const needsMediaRelink = Boolean(projectMediaName && !file);
-  const exportDuration = canExport ? Math.max(0, trimEnd - trimStart) : 0;
+  const exportDuration = clipReadyForExport ? Math.max(0, trimEnd - trimStart) : 0;
   const canUndo = editHistory.undo.length > 0;
   const canRedo = editHistory.redo.length > 0;
   const quickStartHint = useMemo(() => {
@@ -350,12 +359,15 @@ function App() {
     if (!hasCaptionWork) {
       return 'Optional: add captions for muted viewing.';
     }
-    if (!canExport) {
+    if (!clipReadyForExport) {
       return 'Next: set a valid trim range, then ship.';
+    }
+    if (!runtimeReady) {
+      return 'Next: start the local worker, then export.';
     }
 
     return 'Mission ready - export is local.';
-  }, [canExport, file, hasCaptionWork, needsMediaRelink, preset.id, projectMediaName]);
+  }, [clipReadyForExport, file, hasCaptionWork, needsMediaRelink, preset.id, projectMediaName, runtimeReady]);
 
   const exportReadiness = useMemo(
     () =>
@@ -399,11 +411,15 @@ function App() {
   const latestExport = exportHistory[0] ?? null;
   const latestExportIsCurrent = Boolean(latestExport && latestExport.projectKey === exportProjectKey);
   const renderPlanLabel = `${exportProfile.label} MP4 - ${preset.label} ${preset.width} x ${preset.height} - ${
-    canExport ? formatTime(exportDuration) : file && duration ? 'Set range' : 'No media'
+    clipReadyForExport ? formatTime(exportDuration) : file && duration ? 'Set range' : 'No media'
   } - ${captionPlanLabel}`;
   const renderPlanStatus =
     exportState === 'exporting'
       ? `Local FFmpeg worker - ${Math.round(exportProgress)}%`
+      : !runtimeReady
+        ? apiHealth === null
+          ? 'Checking local worker before export'
+          : 'Local worker unavailable - no cloud fallback'
       : latestExport
         ? latestExportIsCurrent
           ? 'Latest export matches this edit'
@@ -1127,16 +1143,19 @@ function App() {
         status: canExport ? 'done' : file ? 'active' : 'locked',
         description: canExport
           ? `${Math.round(exportDuration)}s export path ready`
+          : clipReadyForExport
+            ? 'Start the local worker to export'
           : file
             ? 'Set a valid trim range to ship'
             : 'Unlock after loading source',
-        actionLabel: canExport ? 'Export MP4' : file ? 'Full range' : 'Import',
-        onAction: canExport ? exportClip : file && duration ? resetTrimToFull : requestMedia
+        actionLabel: canExport ? 'Export MP4' : clipReadyForExport ? 'Worker' : file ? 'Full range' : 'Import',
+        onAction: canExport ? exportClip : clipReadyForExport ? () => setExportCenterOpen(true) : file && duration ? resetTrimToFull : requestMedia
       }
     ];
   }, [
     addGuidedCaption,
     canExport,
+    clipReadyForExport,
     captions.length,
     chooseVerticalFormat,
     duration,
@@ -1296,7 +1315,7 @@ function App() {
         return;
       }
 
-      if (normalized === 'r' && file && duration && !canExport) {
+      if (normalized === 'r' && file && duration && !clipReadyForExport) {
         event.preventDefault();
         resetTrimToFull();
         return;
@@ -1317,6 +1336,7 @@ function App() {
   }, [
     addGuidedCaption,
     canExport,
+    clipReadyForExport,
     canRedo,
     canUndo,
     checkpoint,
@@ -1366,10 +1386,16 @@ function App() {
     {
       id: 'range',
       label: 'Range',
-      value: canExport ? formatTime(trimEnd - trimStart) : file ? 'Waiting' : 'No media',
-      state: canExport ? 'ready' : file ? 'active' : 'blocked',
-      actionLabel: file && duration && !canExport ? 'Full' : undefined,
-      onAction: file && duration && !canExport ? resetTrimToFull : undefined
+      value: clipReadyForExport ? formatTime(trimEnd - trimStart) : file ? 'Waiting' : 'No media',
+      state: clipReadyForExport ? 'ready' : file ? 'active' : 'blocked',
+      actionLabel: file && duration && !clipReadyForExport ? 'Full' : undefined,
+      onAction: file && duration && !clipReadyForExport ? resetTrimToFull : undefined
+    },
+    {
+      id: 'runtime',
+      label: 'Worker',
+      value: runtimePreflightValue,
+      state: runtimePreflightState
     },
     {
       id: 'frame',
@@ -1400,6 +1426,10 @@ function App() {
     ? exportState === 'exporting'
       ? 'Cancel'
       : 'Export'
+    : clipReadyForExport && !runtimeReady
+      ? apiHealth === null
+        ? 'Checking'
+        : 'Worker'
     : file && duration
       ? 'Full range'
       : file
@@ -1407,7 +1437,7 @@ function App() {
         : needsMediaRelink
           ? 'Relink'
           : 'Import';
-  const preflightPrimaryDisabled = canExport ? false : file ? !duration : false;
+  const preflightPrimaryDisabled = canExport ? false : clipReadyForExport ? apiHealth === null : file ? !duration : false;
   const handlePreflightPrimaryAction = () => {
     if (exportState === 'exporting') {
       cancelExport();
@@ -1416,6 +1446,12 @@ function App() {
 
     if (canExport) {
       void exportClip();
+      return;
+    }
+
+    if (clipReadyForExport && !runtimeReady) {
+      setExportState('error');
+      setExportMessage('Export blocked - local API or FFmpeg worker is unavailable. Start FreeCut locally, then retry.');
       return;
     }
 
@@ -1494,7 +1530,7 @@ function App() {
     const canAddCaption = Boolean(file);
     const canExportAction = canExport || exportState === 'exporting';
     const canFrame = preset.id !== 'vertical';
-    const canResetTrim = Boolean(file && duration && !canExport);
+    const canResetTrim = Boolean(file && duration && !clipReadyForExport);
     const latestRecentProject = file ? undefined : recentProjects[0];
 
     return [
@@ -1541,19 +1577,23 @@ function App() {
         description: canResetTrim
           ? 'Set a safe export range baseline'
           : file
-            ? canExport
+            ? clipReadyForExport
               ? 'Export is ready'
               : 'Trim already spans full range'
             : 'Load a clip before trimming',
         keyHint: 'R',
         onActivate: resetTrimToFull,
         disabled: !canResetTrim,
-        disabledReason: canExport ? 'Range ready' : file ? undefined : 'Load a clip first'
+        disabledReason: clipReadyForExport ? 'Range ready' : file ? undefined : 'Load a clip first'
       },
       {
         id: 'export',
         label: exportState === 'exporting' ? 'Cancel render' : 'Export MP4',
-        description: canExportAction ? 'Run local render to MP4, or stop it if needed' : 'Need a source and valid trim range',
+        description: canExportAction
+          ? 'Run local render to MP4, or stop it if needed'
+          : clipReadyForExport
+            ? 'Start the local worker before exporting'
+            : 'Need a source and valid trim range',
         keyHint: 'E',
         onActivate: () => {
           if (exportState === 'exporting') {
@@ -1600,6 +1640,7 @@ function App() {
   }, [
     addGuidedCaption,
     canExport,
+    clipReadyForExport,
     cancelExport,
     chooseVerticalFormat,
     exportClip,
@@ -1721,7 +1762,13 @@ function App() {
     {
       id: 'export',
       title: 'Ship the cut',
-      detail: exportState === 'exporting' ? `Rendering ${exportProfile.label} MP4 at ${Math.round(exportProgress)}%.` : canExport ? 'Everything needed for an MP4 export is ready.' : 'Load a clip and keep a valid trim range.',
+      detail: exportState === 'exporting'
+        ? `Rendering ${exportProfile.label} MP4 at ${Math.round(exportProgress)}%.`
+        : canExport
+          ? 'Everything needed for a local MP4 export is ready.'
+          : clipReadyForExport
+            ? 'Start the local worker before exporting.'
+            : 'Load a clip and keep a valid trim range.',
       actionLabel: exportState === 'exporting' ? 'Working' : 'Export',
       actionDisabled: exportState === 'exporting',
       status: canExport ? 'ready' : 'locked',
@@ -1753,7 +1800,7 @@ function App() {
             reason: 'FreeCut is checking the clip length before it opens the export route.',
             title: 'Reading clip'
           }
-      : file && duration && !canExport
+      : file && duration && !clipReadyForExport
         ? {
             action: resetTrimToFull,
             eyebrow: 'Next',
@@ -1761,6 +1808,18 @@ function App() {
             reason: 'The export needs a non-empty trim range before it can ship.',
             title: 'Set a valid range'
           }
+        : clipReadyForExport && !runtimeReady
+          ? {
+              action: () => {
+                setExportState('error');
+                setExportMessage('Export blocked - local API or FFmpeg worker is unavailable. Start FreeCut locally, then retry.');
+                setExportCenterOpen(true);
+              },
+              eyebrow: 'Runtime',
+              label: 'Check',
+              reason: 'Runtime preflight is blocking local export.',
+              title: 'Start local worker'
+            }
         : canExport
             ? {
                 action: exportState === 'exporting' ? cancelExport : exportClip,

@@ -38,7 +38,10 @@ $requiredFiles = @(
   'scripts\doctor.ps1',
   'scripts\setup-freecut.ps1',
   'scripts\start-freecut.ps1',
+  'scripts\prepare-github-release.ps1',
   'docs\TROUBLESHOOTING.md',
+  'docs\RELEASE-CHECKLIST.md',
+  'docs\RELEASE-NOTES-v0.1.0.md',
   'RELEASE-MANIFEST.json'
 )
 

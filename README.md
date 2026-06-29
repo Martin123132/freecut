@@ -100,3 +100,11 @@ It also writes a `.sha256` checksum beside the zip and embeds `RELEASE-MANIFEST.
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\verify-release-package.ps1 -PackagePath D:\codex-releases\freecut\<zip-name>.zip
 ```
+
+Prepare GitHub-release-ready assets and a draft without publishing a tag or release:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\prepare-github-release.ps1
+```
+
+Use [docs/RELEASE-CHECKLIST.md](docs/RELEASE-CHECKLIST.md) before any public release publish step.

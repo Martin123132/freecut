@@ -89,11 +89,14 @@ try {
     startCommand = 'powershell -NoProfile -ExecutionPolicy Bypass -File .\Start-FreeCut.ps1'
     setupCommand = 'powershell -NoProfile -ExecutionPolicy Bypass -File .\Setup-FreeCut.ps1'
     verifyCommand = 'powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\verify-release-package.ps1 -PackagePath <zip>'
+    releaseNotes = "docs/RELEASE-NOTES-v$version.md"
+    releaseChecklist = 'docs/RELEASE-CHECKLIST.md'
     includes = @(
       'production web build',
       'local API server',
       'Windows setup/start scripts',
       'project documentation',
+      'release notes and checklist',
       'tests and source'
     )
     excludes = @(
